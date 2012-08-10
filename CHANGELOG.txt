@@ -1,0 +1,14 @@
+chebpy Changelog
+===============
+
+Here you can see the full list of changes between each chebpy release.
+
+Version 0.1
+-----------
+
+* Released at Aug. 10th, 2012
+
+Developing stage
+----------------
+
+* Since Aug. 7th, 2012
