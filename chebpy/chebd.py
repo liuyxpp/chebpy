@@ -18,6 +18,7 @@ is expensive for large N.
 import numpy as np
 from numpy.fft import fft, ifft
 from scipy.fftpack import dct, idct
+
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 
 __all__ = ['cheb_D1_mat',
@@ -42,20 +43,23 @@ def cheb_D1_mat(N):
     '''
 
     if N == 0:
-        return (0,1)
+        return (0., 1.)
 
     ii = np.arange(N+1)
     x = np.cos(np.pi * ii / N)
-    c = np.ones(N+1)
+    x.shape = (N+1, 1)
+
+    c = np.ones( (N+1, 1) )
     c[0] = 2.
     c[N] = 2.
-    c = c * np.power(-1, ii)
-    X = np.tile(x, (N+1, 1))
-    dX = X.T - X
+    c *= np.power(-1, ii).reshape( (N+1, 1) )
+
+    X = np.tile(x, (1, N+1))
+    dX = X - X.T
+
     # D = (c * (1./c)') ./ (dX + eye(N+1)) in Matlab convention
-    D = np.dot(c.reshape((N+1,1)), (1.0/c).reshape((1,N+1))) / \
-            (dX + np.eye(N+1))
-    D = D - np.diag(np.sum(D,1))
+    D = np.dot(c, 1.0/c) / (dX + np.eye(N+1))
+    D -= np.diag(np.sum(D, axis=1))
     return (D, x)
 
 

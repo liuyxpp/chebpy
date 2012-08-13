@@ -12,7 +12,7 @@ Quickstart
 
 ::
 
-    $ easy_install gyroid
+    $ easy_install chebpy
 
 or
 
@@ -24,8 +24,8 @@ or
 
 Required packages:
 
-* `numpy`: it should be installed before installing gyroid.
-* `scipy`: use it to save data in Matlab mat format.
+* `numpy`: chebpy heavily depends on numpy.
+* `scipy`: advanced algorithms, such as scipy.fftpack.dct.
 
 2. APIs
 ^^^^^^^^
@@ -38,10 +38,12 @@ Current available functions:
 * cheb_polynomial_series
 
 **Fast Chebyshev transform**
+
 * cheb_fast_transform
 * cheb_inverse_fast_transform
 
 **Chebyshev differentiation**
+
 * cheb_D1_mat
 * cheb_D1_fft
 * cheb_D1_dct

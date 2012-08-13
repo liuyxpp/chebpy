@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 from chebpy import cheb_D1_mat, cheb_D1_fft, cheb_D1_fchebt, cheb_D1_dct
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
+from chebpy import cheb_mde_splitting_pseudospectral
 
 def test_cheb_D1_mat():
     '''
@@ -116,6 +117,24 @@ def test_cheb_fast_transform():
     print ff
 
 
+def test_cheb_mde():
+    L = 10
+    N = 64
+    Ns = 101
+    ii = np.arange(N+1)
+    x = 1. * ii * L / N
+    sech = 1. / np.cosh(3. * L / 4. * (2. * ii / N - 1.))
+    W = 1. - 2. * sech * sech
+    plt.plot(x, W)
+    plt.axis([0, 10, -1.1, 1.1,])
+    plt.show()
+
+    q = cheb_mde_splitting_pseudospectral(W, L, Ns)
+    plt.plot(x, q)
+    plt.axis([0, 10, 0, 3])
+    plt.show()
+
+
 def test_speed():
     N = 32
     M = 10000
@@ -151,5 +170,6 @@ if __name__ == '__main__':
     #test_cheb_D1_fchebt()
     #test_cheb_D1_dct()
     #test_cheb_fast_transform()
-    test_speed()
+    test_cheb_mde()
+    #test_speed()
 
