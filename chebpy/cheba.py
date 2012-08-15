@@ -41,6 +41,7 @@ def cheb_mde_splitting_pseudospectral(W, Lx, Ns, Boundary=0):
 
     k2 = (np.pi * np.pi) / (Lx * Lx) * np.arange(N+1) * np.arange(N+1)
     expw = np.exp(-0.5 * ds * W)
+    t = time()
     for i in xrange(Ns-1):
         u = expw * u
         ak = cheb_fast_transform(u) * np.exp(-ds * k2)
@@ -48,6 +49,7 @@ def cheb_mde_splitting_pseudospectral(W, Lx, Ns, Boundary=0):
         u = expw * u
         # Dirichlet boundary condition
         u[0] = 0.; u[N] = 0.
+    print 'splitting time: ', time() - t
 
     ii = np.arange(N+1)
     x = 1. * ii * Lx / N
@@ -88,6 +90,7 @@ def cheb_mde_etdrk4(W, Lx, Ns):
     E = expm(A)
     E2 = expm(A/2)
 
+    t = time()
     for j in xrange(Ns-1):
         Nu = w * v
         a = np.dot(E2, v) + np.dot(Q, Nu)
@@ -98,73 +101,7 @@ def cheb_mde_etdrk4(W, Lx, Ns):
         Nc = w * c
         v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
             np.dot(f3, Nc)
-
-    u[1:N] = v[:]
-    return (u, .5*(xx+1.)*Lx)
-
-
-def cheb_mde_etdrk4_bak(W, Lx, Ns):
-    '''
-    Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
-
-    The MDE is:
-        dq/dt = Dq + Wq
-        q(-1,t) = 0, t>=0
-        q(+1,t) = 0, t>=0
-        q(x,0) = 1, -1<x<1
-    where D is Laplace operator.
-
-    Computation is based on Chebyshev points, so linear term is
-    non-diagonal.
-    '''
-
-    ds = 1. / (Ns -1)
-    N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
-    u = np.ones((N+1,1))
-    u[0] = 0.; u[N] = 0.
-    v = u[1:N]
-    w = -W[1:N]
-    w.shape = (N-1, 1)
-
-    h = ds
-    M = 32
-    kk = np.arange(1, M+1)
-    # theta = pi/64 * {1, 3, 5, ..., 2*M-1}
-    # the radius of the circular contour is 15.0
-    r = 15 * np.exp(1j * np.pi * (kk - .5) / M)
-    L = np.dot(D, D) # L = D^2
-    L = (4. / Lx**2) * L[1:N,1:N]
-    A = h * L
-    E = expm(A)
-    E2 = expm(A/2)
-    I = np.eye(N-1)
-    Z = 1j * np.zeros((N-1,N-1))
-    f1 = Z; f2 = Z; f3 = Z; Q = Z
-    for j in xrange(M):
-        z = r[j]
-        zIA = inv(z * I - A)
-        hzIA = h * zIA
-        hzIAz2 = hzIA / z**2
-        Q = Q + hzIA * (np.exp(z/2) - 1)
-        f1 = f1 + hzIAz2 * (-4 - z + np.exp(z) * (4 - 3*z + z**2))
-        f2 = f2 + hzIAz2 * (2 + z + np.exp(z) * (z - 2))
-        f3 = f3 + hzIAz2 * (-4 - 3*z - z*z + np.exp(z) * (4 - z))
-    f1 = np.real(f1 / M)
-    f2 = np.real(f2 / M)
-    f3 = np.real(f3 / M)
-    Q = np.real(Q / M)
-
-    for j in xrange(Ns-1):
-        Nu = w * v
-        a = np.dot(E2, v) + np.dot(Q, Nu)
-        Na = w * a
-        b = np.dot(E2, v) + np.dot(Q, Na)
-        Nb = w * b
-        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
-        Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
-            np.dot(f3, Nc)
+    print 'etdrk4 time: ', time() - t
 
     u[1:N] = v[:]
     return (u, .5*(xx+1.)*Lx)
