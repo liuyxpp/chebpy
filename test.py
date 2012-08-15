@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 from chebpy import cheb_D1_mat, cheb_D1_fft, cheb_D1_fchebt, cheb_D1_dct
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
-from chebpy import cheb_mde_splitting_pseudospectral
+from chebpy import cheb_mde_splitting_pseudospectral, cheb_mde_etdrk4
+from chebpy import cheb_allen_cahn_etdrk4
 
 def test_cheb_D1_mat():
     '''
@@ -120,19 +121,36 @@ def test_cheb_fast_transform():
 def test_cheb_mde():
     L = 10
     N = 64
-    Ns = 101
+    Ns = 51
+
     ii = np.arange(N+1)
     x = 1. * ii * L / N
-    sech = 1. / np.cosh(3. * L / 4. * (2. * ii / N - 1.))
+    sech = 1. / np.cosh(.75 * (2.*x - L))
     W = 1. - 2. * sech * sech
     plt.plot(x, W)
     plt.axis([0, 10, -1.1, 1.1,])
     plt.show()
 
-    q = cheb_mde_splitting_pseudospectral(W, L, Ns)
-    plt.plot(x, q)
+    q1, x1 = cheb_mde_splitting_pseudospectral(W, L, Ns)
+
+    x = np.cos(np.pi * ii / N)
+    x = .5 * (x + 1) * L
+    sech = 1. / np.cosh(.75 * (2.*x - L))
+    W = 1. - 2. * sech * sech
+    plt.plot(x, W)
+    plt.axis([0, 10, -1.1, 1.1,])
+    plt.show()
+
+    q2, x2 = cheb_mde_etdrk4(W, L, Ns)
+
+    plt.plot(x1, q1)
+    plt.plot(x2, q2, 'r')
     plt.axis([0, 10, 0, 3])
     plt.show()
+
+
+def test_cheb_allen_cahn_etdrk4():
+    cheb_allen_cahn_etdrk4()
 
 
 def test_speed():
@@ -171,5 +189,6 @@ if __name__ == '__main__':
     #test_cheb_D1_dct()
     #test_cheb_fast_transform()
     test_cheb_mde()
+    #test_cheb_allen_cahn_etdrk4()
     #test_speed()
 

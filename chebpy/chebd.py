@@ -58,7 +58,7 @@ def cheb_D1_mat(N):
     dX = X - X.T
 
     # D = (c * (1./c)') ./ (dX + eye(N+1)) in Matlab convention
-    D = np.dot(c, 1.0/c) / (dX + np.eye(N+1))
+    D = np.dot(c, 1.0/c.T) / (dX + np.eye(N+1))
     D -= np.diag(np.sum(D, axis=1))
     return (D, x)
 
