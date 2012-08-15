@@ -121,7 +121,7 @@ def test_cheb_fast_transform():
 def test_cheb_mde():
     L = 10
     N = 64
-    Ns = 51
+    Ns = 201
 
     ii = np.arange(N+1)
     x = 1. * ii * L / N
@@ -144,8 +144,10 @@ def test_cheb_mde():
     q2, x2 = cheb_mde_etdrk4(W, L, Ns)
 
     plt.plot(x1, q1)
+    plt.plot(x1, q1, '.')
     plt.plot(x2, q2, 'r')
-    plt.axis([0, 10, 0, 3])
+    plt.plot(x2, q2, 'r.')
+    plt.axis([0, 10, 0, 1.15])
     plt.show()
 
 

@@ -23,5 +23,6 @@ from .cheb import *
 from .chebt import *
 from .chebd import *
 #from .chebp import *
+from .integral import *
 from .cheba import *
 

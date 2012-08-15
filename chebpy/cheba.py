@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 from chebpy import cheb_D1_mat
+from chebpy import etdrk4_coeff
 
 __all__ = ['cheb_mde_splitting_pseudospectral',
            'cheb_mde_etdrk4',
@@ -78,7 +79,59 @@ def cheb_mde_etdrk4(W, Lx, Ns):
 
     h = ds
     M = 32
+    R = 15.
+    L = np.dot(D, D) # L = D^2
+    L = (4. / Lx**2) * L[1:N,1:N]
+    Q, f1, f2, f3 = etdrk4_coeff(L, h, M, R)
+
+    A = h * L
+    E = expm(A)
+    E2 = expm(A/2)
+
+    for j in xrange(Ns-1):
+        Nu = w * v
+        a = np.dot(E2, v) + np.dot(Q, Nu)
+        Na = w * a
+        b = np.dot(E2, v) + np.dot(Q, Na)
+        Nb = w * b
+        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
+        Nc = w * c
+        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
+            np.dot(f3, Nc)
+
+    u[1:N] = v[:]
+    return (u, .5*(xx+1.)*Lx)
+
+
+def cheb_mde_etdrk4_bak(W, Lx, Ns):
+    '''
+    Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
+
+    The MDE is:
+        dq/dt = Dq + Wq
+        q(-1,t) = 0, t>=0
+        q(+1,t) = 0, t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+
+    Computation is based on Chebyshev points, so linear term is
+    non-diagonal.
+    '''
+
+    ds = 1. / (Ns -1)
+    N = np.size(W) - 1
+    D, xx = cheb_D1_mat(N)
+    u = np.ones((N+1,1))
+    u[0] = 0.; u[N] = 0.
+    v = u[1:N]
+    w = -W[1:N]
+    w.shape = (N-1, 1)
+
+    h = ds
+    M = 32
     kk = np.arange(1, M+1)
+    # theta = pi/64 * {1, 3, 5, ..., 2*M-1}
+    # the radius of the circular contour is 15.0
     r = 15 * np.exp(1j * np.pi * (kk - .5) / M)
     L = np.dot(D, D) # L = D^2
     L = (4. / Lx**2) * L[1:N,1:N]
@@ -135,9 +188,11 @@ def cheb_allen_cahn_etdrk4():
     u = np.concatenate(([[1]], w+x, [[-1]]))
 
     h = 1./4
-    M = 32
+    M = 32 # Number of points in upper half-plane
     kk = np.arange(1, M+1)
-    r = 15 * np.exp(1j * np.pi * (kk - .5) / M)
+    # theta = pi/64 * {1, 3, 5, ..., 2*M-1}
+    # the radius of the circular contour is 15.0
+    r = 15.0 * np.exp(1j * np.pi * (kk - .5) / M)
     L = np.dot(D, D) # L = D^2
     L = .01 * L[1:N,1:N]
     A = h * L
