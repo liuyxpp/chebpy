@@ -7,6 +7,7 @@ Applications of Chebyshev spectral methods to solve PDEs.
 
 """
 
+from time import time
 from math import cos, acos
 import numpy as np
 from scipy.linalg import expm, expm2, expm3, inv
@@ -14,7 +15,7 @@ import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 from chebpy import cheb_D1_mat
-from chebpy import etdrk4_coeff
+from chebpy import etdrk4_coeff_ndiag
 
 __all__ = ['cheb_mde_splitting_pseudospectral',
            'cheb_mde_etdrk4',
@@ -41,7 +42,6 @@ def cheb_mde_splitting_pseudospectral(W, Lx, Ns, Boundary=0):
 
     k2 = (np.pi * np.pi) / (Lx * Lx) * np.arange(N+1) * np.arange(N+1)
     expw = np.exp(-0.5 * ds * W)
-    t = time()
     for i in xrange(Ns-1):
         u = expw * u
         ak = cheb_fast_transform(u) * np.exp(-ds * k2)
@@ -49,7 +49,6 @@ def cheb_mde_splitting_pseudospectral(W, Lx, Ns, Boundary=0):
         u = expw * u
         # Dirichlet boundary condition
         u[0] = 0.; u[N] = 0.
-    print 'splitting time: ', time() - t
 
     ii = np.arange(N+1)
     x = 1. * ii * Lx / N
@@ -58,6 +57,12 @@ def cheb_mde_splitting_pseudospectral(W, Lx, Ns, Boundary=0):
 def cheb_mde_etdrk4(W, Lx, Ns):
     '''
     Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
+    This method allows very large time step.
+    
+    Thus ETDRK4 is much faster than Strang Splitting or DCT.
+    For example, when space is discretized in N = 256, then Splitting
+    method needs at leat Ns = 1601 to achive the same accuracy of ETDRK4 
+    with Ns = 11. This is remarkable. 
 
     The MDE is:
         dq/dt = Dq + Wq
@@ -70,7 +75,7 @@ def cheb_mde_etdrk4(W, Lx, Ns):
     non-diagonal.
     '''
 
-    ds = 1. / (Ns -1)
+    ds = 1. / (Ns-1)
     N = np.size(W) - 1
     D, xx = cheb_D1_mat(N)
     u = np.ones((N+1,1))
@@ -84,13 +89,12 @@ def cheb_mde_etdrk4(W, Lx, Ns):
     R = 15.
     L = np.dot(D, D) # L = D^2
     L = (4. / Lx**2) * L[1:N,1:N]
-    Q, f1, f2, f3 = etdrk4_coeff(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
     E2 = expm(A/2)
 
-    t = time()
     for j in xrange(Ns-1):
         Nu = w * v
         a = np.dot(E2, v) + np.dot(Q, Nu)
@@ -101,7 +105,6 @@ def cheb_mde_etdrk4(W, Lx, Ns):
         Nc = w * c
         v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
             np.dot(f3, Nc)
-    print 'etdrk4 time: ', time() - t
 
     u[1:N] = v[:]
     return (u, .5*(xx+1.)*Lx)

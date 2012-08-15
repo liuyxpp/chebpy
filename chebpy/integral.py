@@ -11,10 +11,16 @@ import numpy as np
 from scipy.linalg import inv
 
 __all__ = ['complex_contour_integral',
-           'etdrk4_coeff',
+           'etdrk4_coeff_ndiag',
           ]
 
-def etdrk4_coeff(L, h, M=32, R=1.0):
+def etdrk4_coeff_ndiag(L, h, M=32, R=1.0):
+    '''
+    Evaluate the coefficients Q, f1, f2, f3 of ETDRK4 for
+    non-diagonal case.
+
+    '''
+
     A = h * L
     N, N = L.shape
     I = np.eye(N)
@@ -41,5 +47,18 @@ def etdrk4_coeff(L, h, M=32, R=1.0):
     return (Q, f1, f2, f3)
 
 
-def complex_contour_integral():
-    pass
+def complex_contour_integral(f, z, M=32, R=1.0):
+    '''
+    Evaluate the complex contour integral of the form
+        (1/(2*pi*i)) \int_G f(t)/(t-z)dt
+    '''
+    theta = np.linspace(.5/M, 1-.5/M, M) * np.pi
+    r = R * np.exp(1j * theta)
+
+    In = 0.
+    for j in xrange(M):
+        t = r[j]
+        In += f(t) * t / (t - z)
+
+    return np.real(In) / M
+
