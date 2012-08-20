@@ -88,50 +88,57 @@ def test_interpolation_1d():
 def test_interpolation_2d():
     '''
     Test function
-        f(x) = |x| + x/2 - x^2
+        f(x,y) = x^2 + y^2
     '''
     
-    N = 64
-    M = 1000
+    Nx = 64
+    Ny = 32
+    Mx = 100
+    My = 200
 
-    ii = np.arange(N+1)
-    xx = np.cos(ii * np.pi / N)
-    w = barycentric_weights_cgl(N)
-    f = np.abs(xx) + .5 * xx - xx**2
-    plt.plot(xx,f,'.')
+    ix = np.arange(Nx+1)
+    x = np.cos(ix * np.pi / Nx)
+    wx = barycentric_weights_cgl(Nx)
+    iy = np.arange(Ny+1)
+    y = np.cos(iy * np.pi / Ny)
+    wy = barycentric_weights_cgl(Ny)
+    X, Y = np.meshgrid(x, y)
+    f = X**2 + Y**2
+    plt.plot(X[Ny/2,:], f[Ny/2.,:],'.')
 
-    kk = np.arange(M+1)
-    yy = (2. / M) * kk - 1.
-    f1 = np.zeros_like(yy)
-    f2 = np.zeros_like(yy)
-    f3 = np.zeros_like(yy)
-    f4 = np.zeros_like(yy)
+    kx = np.arange(Mx+1)
+    u = (2. / Mx) * kx - 1.
+    ky = np.arange(My+1)
+    v = (2. / My) * ky - 1.
+    U, V = np.meshgrid(u, v)
+    f0 = U**2 + V**2
 
-    print 'Interpolation by point-by-point'
+    f1 = np.zeros_like(f)
+    f2 = np.zeros_like(f)
+    f3 = np.zeros_like(f)
+    f4 = np.zeros_like(f)
+
+    print 'cheb interpolation'
     t = time()
-    for j in xrange(M+1):
-        f1[j] = cheb_interpolation_point(yy[j],f)
-        f2[j] = interpolation_point(yy[j], f, xx, w)
-    print 'point-by-point time: ', time() - t
+    f1 = cheb_interpolation_2d(u, v, f)
+    print 'cheb time: ', time() - t
+
+    print 'general interpolation'
+    t = time()
+    f2 = interpolation_2d(u, v, f, x, y, wx, wy)
+    print 'general time: ', time() - t
+
     print f2-f1
     print almost_equal(f1,f2)
-    plt.plot(yy, f1)
-
-    print 'Interpolation by matrix'
-    t = time()
-    f3 = cheb_interpolation_1d(yy, f)
-    f4 = interpolation_1d(yy, f, xx, w)
-    print 'matrix time: ', time() - t
-    print f3-f1
-    print f4-f1
-    print almost_equal(f3,f1), almost_equal(f4,f1)
-    plt.plot(yy, f3, 'r')
+    print f1 - f0
+    print almost_equal(f1, f0)
+    plt.plot(U[My/2,:], f1[My/2.,:])
 
     plt.show()
 
 
 if __name__ == '__main__':
     #test_barycentric_weights()
-    test_interpolation_1d()
+    #test_interpolation_1d()
     test_interpolation_2d()
 

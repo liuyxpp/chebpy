@@ -14,6 +14,7 @@ __all__ = ['barycentric_weights',
            'barycentric_weights_cgl',
            'barycentric_weights_cg',
            'barycentric_matrix',
+           'cheb_barycentric_matrix',
            'interpolation_point',
            'interpolation_1d',
            'interpolation_2d',
@@ -96,7 +97,14 @@ def barycentric_matrix(y, x, w):
     return T
 
 
-def interpolation_point(x, f, xx, w):
+def cheb_barycentric_matrix(y, N):
+    ii = np.arange(N+1)
+    x = np.cos(ii * np.pi / N)
+    w = barycentric_weights_cgl(N)
+    return barycentric_matrix(y, x, w)
+
+
+def interpolation_point(y, f, x, w):
     '''
     Barycentric Lagrange Interpolation for a single point of the most
     general form.
@@ -109,9 +117,9 @@ def interpolation_point(x, f, xx, w):
 
     N = np.size(f) - 1
     for j in xrange(N+1):
-        if almost_equal(x, xx[j]):
+        if almost_equal(y, x[j]):
             return f[j]
-    t = w / (x - xx)
+    t = w / (y - x)
     return np.sum(t * f) / np.sum(t)
 
 
@@ -126,9 +134,9 @@ def cheb_interpolation_point(y, f):
 
     N = np.size(f) - 1
     ii = np.arange(N+1)
-    xx = np.cos(ii * np.pi / N)
+    x = np.cos(ii * np.pi / N)
     w = barycentric_weights_cgl(N)
-    return interpolation_point(y, f, xx, w)
+    return interpolation_point(y, f, x, w)
 
 
 def interpolation_1d(y, f, x, w):
@@ -138,17 +146,26 @@ def interpolation_1d(y, f, x, w):
 
 def cheb_interpolation_1d(y, f):
     N = np.size(f) - 1
-    ii = np.arange(N+1)
-    x = np.cos(ii * np.pi / N)
-    w = barycentric_weights_cgl(N)
-    T = barycentric_matrix(y, x, w)
+    T = cheb_barycentric_matrix(y, N)
     return np.dot(T, f)
 
 
-def interpolation_2d():
-    pass
+def interpolation_2d(y1, y2, f, x1, x2, w1, w2):
+    '''
+    Interpolate from Nx x Ny to Mx x My.
+    '''
+
+    T1 = barycentric_matrix(y1, x1, w1)
+    F1 = np.dot(T1, f)
+    T2 = barycentric_matrix(y2, x2, w2)
+    return np.dot(F1, T2.T)
 
 
-def cheb_interpolation_2d():
-    pass
+def cheb_interpolation_2d(y1, y2, f):
+    Ny, Nx = np.array(f.shape) - 1
+    T1 = cheb_barycentric_matrix(y1, Nx)
+    F1 = np.dot(T1, f)
+    T2 = cheb_barycentric_matrix(y2, Ny)
+    print T1.shape, f.shape, F1.shape, T2.shape
+    return np.dot(F1, T2.T)
 

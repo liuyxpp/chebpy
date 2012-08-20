@@ -15,7 +15,13 @@ __all__ = ['almost_equal',
            'EPS',
           ]
 
-def almost_equal(a, b):
-    return np.allclose(a-b, 0, EPS, 24.*EPS)
+def almost_equal(a, b, tol=24):
+    '''
+    Float comparison for array_like objects.
+    
+    :param:tol: number of EPS for the tolerence.
+    '''
+
+    return np.allclose(a-b, 0, EPS, tol*EPS)
 
 
