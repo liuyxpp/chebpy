@@ -35,6 +35,7 @@ def test_cheb_D1_mat():
         plt.plot(x, err, '-')
         plt.show()
 
+
 def test_cheb_D1_fft():
     '''
     Example is from p18.m of Trefethen's book, p.81.
@@ -102,6 +103,7 @@ def test_cheb_D1_dct():
         plt.plot(x, err, '.')
         plt.plot(x, err, '-')
         plt.show()
+
 
 def test_cheb_fast_transform():
     N = 10

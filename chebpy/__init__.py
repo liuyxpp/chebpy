@@ -19,10 +19,11 @@ __author__ = "Yi-Xin Liu <liuyxpp@gmail.com>"
 __license__ = "BSD License"
 __version__ = "0.1"
 
-from .cheb import *
-from .chebt import *
-from .chebd import *
-#from .chebp import *
+from .misc import *
+from .cheb import * # Chebyshev polynomials
+from .chebt import * # Chebyshev transform
+from .chebi import * # Chebyshev interpolations
+from .chebd import * # Chebyshev differentiation
 from .integral import *
-from .cheba import *
+from .cheba import * # Chebyshev applications on solution of PDEs
 
