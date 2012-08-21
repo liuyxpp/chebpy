@@ -89,9 +89,10 @@ def test_interpolation_2d():
     '''
     Test function
         f(x,y) = x^2 + y^2
+        f(x,y) = exp(-(x^2+y^2))
     '''
     
-    Nx = 64
+    Nx = 32
     Ny = 32
     Mx = 100
     My = 200
@@ -103,7 +104,8 @@ def test_interpolation_2d():
     y = np.cos(iy * np.pi / Ny)
     wy = barycentric_weights_cgl(Ny)
     X, Y = np.meshgrid(x, y)
-    f = X**2 + Y**2
+    #f = X**2 + Y**2
+    f = np.exp(-(X**2 + Y**2))
     plt.plot(X[Ny/2,:], f[Ny/2.,:],'.')
 
     kx = np.arange(Mx+1)
@@ -111,12 +113,11 @@ def test_interpolation_2d():
     ky = np.arange(My+1)
     v = (2. / My) * ky - 1.
     U, V = np.meshgrid(u, v)
-    f0 = U**2 + V**2
+    #f0 = U**2 + V**2
+    f0 = np.exp(-(U**2 + V**2))
 
     f1 = np.zeros_like(f)
     f2 = np.zeros_like(f)
-    f3 = np.zeros_like(f)
-    f4 = np.zeros_like(f)
 
     print 'cheb interpolation'
     t = time()
@@ -129,9 +130,9 @@ def test_interpolation_2d():
     print 'general time: ', time() - t
 
     print f2-f1
+    print 'Is general and cheb interpolation the same? ',
     print almost_equal(f1,f2)
-    print f1 - f0
-    print almost_equal(f1, f0)
+    print 'Interpolation error: ', np.linalg.norm(f1-f0, np.inf)
     plt.plot(U[My/2,:], f1[My/2.,:])
 
     plt.show()

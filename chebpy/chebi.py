@@ -153,19 +153,25 @@ def cheb_interpolation_1d(y, f):
 def interpolation_2d(y1, y2, f, x1, x2, w1, w2):
     '''
     Interpolate from Nx x Ny to Mx x My.
+
+    :param:f: f[Ny, Nx]
     '''
 
-    T1 = barycentric_matrix(y1, x1, w1)
-    F1 = np.dot(T1, f)
+    # y dimension T2 = My x Ny
     T2 = barycentric_matrix(y2, x2, w2)
-    return np.dot(F1, T2.T)
+    # F2 = My x Ny .dot. Ny x Nx = My x Nx
+    F2 = np.dot(T2, f)
+    # x dimension T1 = Mx x Nx
+    T1 = barycentric_matrix(y1, x1, w1)
+    # f_out = My x Mx = My x Nx .dot. Nx x Mx = F2 .dot. T1.T
+    return np.dot(F2, T1.T)
 
 
 def cheb_interpolation_2d(y1, y2, f):
     Ny, Nx = np.array(f.shape) - 1
-    T1 = cheb_barycentric_matrix(y1, Nx)
-    F1 = np.dot(T1, f)
     T2 = cheb_barycentric_matrix(y2, Ny)
-    print T1.shape, f.shape, F1.shape, T2.shape
-    return np.dot(F1, T2.T)
+    F2 = np.dot(T2, f)
+    T1 = cheb_barycentric_matrix(y1, Nx)
+    print T2.shape, f.shape, F2.shape, T1.shape
+    return np.dot(F2, T1.T)
 
