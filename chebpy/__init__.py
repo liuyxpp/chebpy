@@ -25,5 +25,6 @@ from .chebt import * # Chebyshev transform
 from .chebi import * # Chebyshev interpolations
 from .chebd import * # Chebyshev differentiation
 from .integral import *
+from .chebq import * # Chebyshev quadratures
 from .cheba import * # Chebyshev applications on solution of PDEs
 

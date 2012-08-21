@@ -28,7 +28,7 @@ def test_cheb_mde():
     sech = 1. / np.cosh(.75 * (2.*x - L))
     W = 1. - 2. * sech * sech
     plt.plot(x, W)
-    plt.axis([0, 10, -1.1, 1.1,])
+    plt.axis([0, 10, -1.1, 1.1])
     plt.show()
 
     q1, x1 = cheb_mde_split(W, L, Ns)

@@ -132,7 +132,7 @@ def test_interpolation_2d():
     print f2-f1
     print 'Is general and cheb interpolation the same? ',
     print almost_equal(f1,f2)
-    print 'Interpolation error: ', np.linalg.norm(f1-f0, np.inf)
+    print 'Interpolation error: ', np.linalg.norm(f1-f0)
     plt.plot(U[My/2,:], f1[My/2.,:])
 
     plt.show()
