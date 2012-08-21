@@ -2,7 +2,7 @@ chebpy
 ======
 
 **chebpy** is a python package for spetral methods of PDEs based on
-Chebyshev seriers. 
+Chebyshev series. 
 
 Quickstart
 ----------
@@ -48,6 +48,21 @@ Current available functions:
 * cheb_D1_fft
 * cheb_D1_dct
 * cheb_D1_fchebt
+
+**Chebyshev interpolation**
+
+* cheb_interpolation_point
+* cheb_interpolation_1d
+* cheb_interpolation_2d
+
+**Chebyshev applications in solution of PDEs**
+
+* cheb_mde_split
+* cheb_mde_neumann_split
+* cheb_mde_etdrk4
+* cheb_mde_neumann_etdrk4
+* cheb_mde_robin_etdrk4
+* cheb_allen_cahn_etdrk4
 
 Ask for Help
 ------------
