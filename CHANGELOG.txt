@@ -3,6 +3,17 @@ chebpy Changelog
 
 Here you can see the full list of changes between each chebpy release.
 
+Version 0.2
+-----------
+
+* Add Chebyshev interpolation methods.
+* Add Chebyshev-Gauss-Lobatto quadrature and Clenshaw-Curtis quadrature
+methods.
+* Add operator splitting methods for modiffied diffusion equations.
+* Add 4th order exponential time stepping via Runge-Kutta scheme (ETDRK4)
+methods for solving modiffied diffusion equations.
+* Add ETDRK4 solver for Allen-Cahn equations.
+
 Version 0.1
 -----------
 

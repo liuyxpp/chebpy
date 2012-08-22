@@ -1,5 +1,6 @@
 syntax: glob
 docs/_build/*
+tests/*.py
 dist/*
 chebpy.egg-info/*
 *.pyc

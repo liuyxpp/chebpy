@@ -99,7 +99,7 @@ def cheb_quadrature_clencurt(f):
     Integrate f in the range [-1, 1] by Clenshaw-Curtis quadrature.
     '''
     N = np.size(f) - 1
-    w = clencurt_weights(N)
+    w = clencurt_weights_fft(N)
     return np.dot(w, f)
 
 

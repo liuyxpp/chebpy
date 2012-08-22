@@ -55,6 +55,11 @@ Current available functions:
 * cheb_interpolation_1d
 * cheb_interpolation_2d
 
+**Chebyshev quadrature**
+
+* cheb_quadrature_clencurt
+* cheb_quadrature_cgl
+
 **Chebyshev applications in solution of PDEs**
 
 * cheb_mde_split
