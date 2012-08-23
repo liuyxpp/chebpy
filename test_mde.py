@@ -18,6 +18,8 @@ from chebpy import cheb_mde_etdrk4, cheb_mde_neumann_etdrk4
 from chebpy import cheb_mde_robin_etdrk4
 from chebpy import cheb_allen_cahn_etdrk4, complex_contour_integral
 from chebpy import cheb_interpolation_1d
+from chebpy import clencurt_weights_fft, cheb_quadrature_clencurt
+from chebpy import cheb_D1_mat
 
 def test_cheb_mde():
     L = 10
@@ -43,7 +45,9 @@ def test_cheb_mde():
     plt.show()
 
     Ns = 11
-    q2, x2 = cheb_mde_etdrk4(W, L, Ns)
+    u0 = np.ones((N+1, 1))
+    u[0] = 0; u[N] = 0;
+    q2, x2 = cheb_mde_etdrk4(W, u0, L, Ns)
 
     plt.plot(x1, q1)
     #plt.plot(x1, q1, '.')
@@ -423,6 +427,94 @@ def test_cheb_allen_cahn_etdrk4():
     cheb_allen_cahn_etdrk4()
 
 
+def test_cheb_mde_brush():
+    '''
+    Solving MDE for polymer brushes.
+    The Dirac initial condition is approximate by a Kronecker delta.
+
+    Suppose the Dirac is \delta(x-x0), Kronecker delta is d_x0
+
+    For Splitting method, the space is uniformly discretized, to constrain
+    the integral of Dirac function to 1, that is
+        I = \Integrate d_x0 = q[x0] * (L/N) = 1
+    Thus, the initial condition of q is
+        q(x) = N/L, x = x0
+        q(x) = 0,   otherwise.
+
+    For ETDRK4 method, the space is discretized in a manner that grids 
+    are clustered near the boundary (Chebyshev Gauss-Lobatto Grids). We
+    can evaluate the integral by Clenshaw-Curtis quadrature, that is
+        I = \Integrate d_x0 = (L/2) * q[x0] * w[x0] = 1
+    where w[x0] is the Clenshaw-Curtis weight at x0. Thus the initial
+    condition of q is
+        q(x) = 2/(L*w(x)), x = x0
+        q(x) = 0,          otherwise
+
+    Apporximate Dirac delta via Chebyshev differention of a step function,
+        H_x0 = 0, x < x0
+        H_x0 = 1, x >= x0
+    Then the Driac delta is
+        D .dot. H_x0
+    Where D is Chebyshev first order differentiation matrix.
+    Ref: Jung Jae-Hun, A spectral collocation approximation of one
+        dimensional head-on colisions of black-holes.
+
+    '''
+
+    L = 15.0
+    x0 = 0.2
+    N = 256
+    Ns = 200 + 1
+    ds = 1./(Ns-1)
+
+    ii = np.arange(N+1)
+    x = 1. * ii * L / N
+    W = np.zeros_like(x)
+    u0 = np.zeros(N+1)
+    ix = int(N * x0 / L)
+    print ix, x[ix]
+    u0[ix] = N / L
+
+    q1, x1 = cheb_mde_split(W, u0, L, Ns)
+    print np.abs(np.max(q1) - 1./np.sqrt(4.*np.pi*ds))
+
+    N = 256
+    ii = np.arange(N+1)
+    x = np.cos(np.pi * ii / N)
+    x = .5 * (x + 1) * L
+    W = np.zeros_like(x)
+    # Apporximate Dirac delta via Kronecker delta
+    u0 = np.zeros(N+1)
+    w = clencurt_weights_fft(N)
+    ix = int(np.arccos(2*x0/L-1) / np.pi * N)
+    print ix, x[ix]
+    u0[ix] = (2.0/L) / w[ix]
+    # Apporximate Dirac delta via Chebyshev differentiation
+    #D, xc = cheb_D1_mat(N)
+    #H = np.zeros(N+1)
+    #H[0:ix+1] = 1.
+    #plt.plot(x, H)
+    #plt.show()
+    #u0 = np.dot(D, H)
+    #u0 = u0 / cheb_quadrature_clencurt(u0)
+    plt.plot(x, u0)
+    plt.show()
+    
+    q2, x2 = cheb_mde_etdrk4(W, u0, L, Ns)
+    print np.abs(np.max(q2) - 1./np.sqrt(4.*np.pi*ds))
+
+    #plt.plot(x1, np.abs(q1))
+    plt.plot(x1, np.abs(q1), '.')
+    #plt.plot(x2, np.abs(q2), 'r')
+    plt.plot(x2, np.abs(q2), 'r.')
+    #plt.axis([0, 10, 0, 1.15])
+    plt.yscale('log')
+    plt.xlabel('x')
+    plt.ylabel('q(x,ds)')
+    plt.grid('on')
+    plt.show()
+
+
 def test_complex_contour_integral():
     M = 32
     R = 2.0
@@ -448,5 +540,6 @@ if __name__ == '__main__':
     #test_complex_contour_integral()
     #test_speed_space_etdrk4()
     #test_speed_space_split()
-    test_speed_accuracy()
+    #test_speed_accuracy()
+    test_cheb_mde_brush()
 

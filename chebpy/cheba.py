@@ -25,7 +25,7 @@ __all__ = ['cheb_mde_split',
            'cheb_allen_cahn_etdrk4',
           ]
 
-def cheb_mde_split(W, Lx, Ns):
+def cheb_mde_split(W, u0, Lx, Ns):
     '''
     Solution of modified diffusion equation (MDE) 
     via Strang operator splitting as time-stepping scheme 
@@ -38,12 +38,14 @@ def cheb_mde_split(W, Lx, Ns):
 
     ds = 1. / (Ns -1)
     N = np.size(W) - 1
-    u = np.ones(N+1)
-    u[0] = 0.; u[N] = 0.
+    #u = np.ones(N+1)
+    u = u0
+    u[0] = 0.; u[N] = 0. # Dirichlet boundary condition
 
     k2 = (np.pi * np.pi) / (Lx * Lx) * np.arange(N+1) * np.arange(N+1)
     expw = np.exp(-0.5 * ds * W)
-    for i in xrange(Ns-1):
+    #for i in xrange(Ns-1):
+    for i in xrange(1):
         u = expw * u
         ak = cheb_fast_transform(u) * np.exp(-ds * k2)
         u = cheb_inverse_fast_transform(ak)
@@ -84,7 +86,7 @@ def cheb_mde_neumann_split(W, Lx, Ns, boundary=0):
     return (u, x) 
 
 
-def cheb_mde_etdrk4(W, Lx, Ns):
+def cheb_mde_etdrk4(W, u0, Lx, Ns):
     '''
     Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
     This method allows very large time step.
@@ -98,7 +100,7 @@ def cheb_mde_etdrk4(W, Lx, Ns):
         dq/dt = Dq + Wq
         q(-1,t) = 0, t>=0
         q(+1,t) = 0, t>=0
-        q(x,0) = 1, -1<x<1
+        q(x,0) = u0, -1<x<1
     where D is Laplace operator.
 
     Computation is based on Chebyshev points, so linear term is
@@ -108,8 +110,10 @@ def cheb_mde_etdrk4(W, Lx, Ns):
     ds = 1. / (Ns-1)
     N = np.size(W) - 1
     D, xx = cheb_D1_mat(N)
-    u = np.ones((N+1,1))
-    u[0] = 0.; u[N] = 0.
+    #u = np.ones((N+1,1))
+    u = u0
+    u.shape = (N+1, 1)
+    u[0] = 0.; u[N] = 0. # Dirichlet boundary condition
     v = u[1:N]
     w = -W[1:N]
     w.shape = (N-1, 1)
@@ -125,7 +129,8 @@ def cheb_mde_etdrk4(W, Lx, Ns):
     E = expm(A)
     E2 = expm(A/2)
 
-    for j in xrange(Ns-1):
+    #for j in xrange(Ns-1):
+    for j in xrange(1):
         Nu = w * v
         a = np.dot(E2, v) + np.dot(Q, Nu)
         Na = w * a
