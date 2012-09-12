@@ -22,6 +22,7 @@ from scipy.fftpack import dct, idct
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 
 __all__ = ['cheb_D1_mat',
+           'cheb_D2_mat',
            'cheb_D2_mat_dirichlet_dirichlet',
            'cheb_D2_mat_dirichlet_robin',
            'cheb_D2_mat_robin_dirichlet',
@@ -68,6 +69,18 @@ def cheb_D1_mat(N):
     return (D, x)
 
 
+def cheb_D2_mat(N):
+    '''
+    Optimized D^2
+    '''
+    D1, x = cheb_D1_mat(N)
+    D2 = np.dot(D1, D1)
+    D2 -= np.diag(np.diag(D2))
+    D2 -= np.diag(np.sum(D2,axis=1))
+
+    return D1, D2, x
+
+
 def cheb_D2_mat_dirichlet_dirichlet(N):
     '''
     Chebyshev differentiation matrix subjecting to DBC-DBC.
@@ -82,8 +95,8 @@ def cheb_D2_mat_dirichlet_dirichlet(N):
     :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
     '''
     D0 = np.eye(N+1)
-    D1, x = cheb_D1_mat(N) # Note: x is a column vector
-    D2 = np.dot(D1, D1)
+    D1, D2, x = cheb_D2_mat(N) # Note: x is a column vector
+    #D2 = np.dot(D1, D1)
 
     J = np.arange(1,N)
     K = np.arange(1,N)
@@ -111,8 +124,8 @@ def cheb_D2_mat_dirichlet_robin(N, kb):
     :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
     '''
     D0 = np.eye(N+1)
-    D1, x = cheb_D1_mat(N) # Note: x is a column vector
-    D2 = np.dot(D1, D1)
+    D1, D2, x = cheb_D2_mat(N) # Note: x is a column vector
+    #D2 = np.dot(D1, D1)
 
     J = np.arange(1,N)
     K = np.arange(0,N)
@@ -155,8 +168,8 @@ def cheb_D2_mat_robin_dirichlet(N, ka):
     :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
     '''
     D0 = np.eye(N+1)
-    D1, x = cheb_D1_mat(N) # Note: x is a column vector
-    D2 = np.dot(D1, D1)
+    D1, D2, x = cheb_D2_mat(N) # Note: x is a column vector
+    #D2 = np.dot(D1, D1)
 
     J = np.arange(1,N)
     K = np.arange(1,N+1)
@@ -200,8 +213,8 @@ def cheb_D2_mat_robin_robin(N, ka, kb):
     :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
     '''
     D0 = np.eye(N+1)
-    D1, x = cheb_D1_mat(N) # Note: x is a column vector
-    D2 = np.dot(D1, D1)
+    D1, D2, x = cheb_D2_mat(N) # Note: x is a column vector
+    #D2 = np.dot(D1, D1)
 
     J = np.arange(1,N)
     K = np.arange(0,N+1)
