@@ -18,6 +18,7 @@ from chebpy import cheb_mde_neumann_split
 from chebpy import cheb_mde_dirichlet_etdrk4
 from chebpy import cheb_mde_neumann_etdrk4
 from chebpy import cheb_mde_robin_etdrk4, cheb_mde_robin_etdrk4_1
+from chebpy import cheb_mde_robin_etdrk4_2
 from chebpy import cheb_mde_mixed_etdrk4
 from chebpy import cheb_allen_cahn_etdrk4, complex_contour_integral
 from chebpy import cheb_interpolation_1d
@@ -91,13 +92,16 @@ def test_cheb_mde_neumann():
     u0 = np.ones_like(W)
     q2, x2 = cheb_mde_neumann_etdrk4(W, u0, L, Ns)
     q3, x3 = cheb_mde_robin_etdrk4(W, u0, L, Ns, 0., 0.)
+    q4, x4 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns, 0., 0.)
     print np.max(np.abs(q2-q3))
+    print np.max(np.abs(q4-q3))
 
     plt.plot(x1, q1, 'b')
     #plt.plot(x1, q1, 'b.')
     plt.plot(x2, q2, 'r')
     #plt.plot(x2, q2, 'r.')
     plt.plot(x3, q3, 'g')
+    plt.plot(x4, q4, 'k')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
 
@@ -121,12 +125,12 @@ def test_cheb_mde_robin():
     u0 = np.ones_like(W)
     q0, x0 = cheb_mde_robin_etdrk4(W, u0, L, Ns, L*ka, L*kb)
     q1, x1 = cheb_mde_robin_etdrk4_1(W, u0, L, Ns, L*ka, L*kb)
-    #q2, x2 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns, L*ka, L*kb)
+    q2, x2 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns, L*ka, L*kb)
     #q3, x3 = cheb_mde_robin_etdrk4_3(W, u0, L, Ns, L*ka, L*kb)
 
     plt.plot(x0, q0, 'k')
     plt.plot(x1, q1, 'b')
-    #plt.plot(x2, q2, 'r')
+    plt.plot(x2, q2, 'r')
     #plt.plot(x3, q3, 'g')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
@@ -303,29 +307,37 @@ def test_accuracy_cheb_mde_robin():
     u0 = np.ones_like(W)
     q1_ref, x1 = cheb_mde_robin_etdrk4(W, u0, L, Ns_ref, L*ka, L*kb)
     q2_ref, x2 = cheb_mde_robin_etdrk4_1(W, u0, L, Ns_ref, L*ka, L*kb)
+    q3_ref, x3 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns_ref, L*ka, L*kb)
 
     plt.plot(x1, q1_ref, 'b')
     plt.plot(x2, q2_ref, 'r')
+    plt.plot(x3, q3_ref, 'g')
     plt.show()
 
     # Ns = 10^t
     errs1 = []
     errs2 = []
+    errs3 = []
     Nss = []
     for Ns in np.round(np.power(10, np.linspace(0,4,10))):
         Ns = int(Ns) + 1
         q1, x1 = cheb_mde_robin_etdrk4(W, u0, L, Ns, L*ka, L*kb)
         q2, x2 = cheb_mde_robin_etdrk4_1(W, u0, L, Ns, L*ka, L*kb)
+        q3, x3 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns, L*ka, L*kb)
         err1 = np.max(q1 - q1_ref) / np.max(q1_ref)
         err2 = np.max(q2 - q2_ref) / np.max(q2_ref)
+        err3 = np.max(q3 - q3_ref) / np.max(q3_ref)
         Nss.append(1./Ns)
         errs1.append(err1)
         errs2.append(err2)
+        errs3.append(err3)
 
     plt.plot(Nss, errs1, 'b')
     plt.plot(Nss, errs1, 'b.')
     plt.plot(Nss, errs2, 'r')
     plt.plot(Nss, errs2, 'r.')
+    plt.plot(Nss, errs3, 'g')
+    plt.plot(Nss, errs3, 'g.')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('Relative timestep')
@@ -614,10 +626,10 @@ if __name__ == '__main__':
     #test_cheb_mde_dirichlet()
     #test_cheb_mde_neumann()
     #test_cheb_mde_robin()
-    test_cheb_mde_mixed()
+    #test_cheb_mde_mixed()
     #test_accuracy_cheb_mde_dirichlet()
     #test_accuracy_cheb_mde_neumann()
-    #test_accuracy_cheb_mde_robin()
+    test_accuracy_cheb_mde_robin()
     #test_cheb_allen_cahn_etdrk4()
     #test_complex_contour_integral()
     #test_speed_space_etdrk4()

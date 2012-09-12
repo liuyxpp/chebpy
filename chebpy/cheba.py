@@ -15,7 +15,8 @@ from scipy.fftpack import dst, idst, dct, idct
 import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
-from chebpy import cheb_D1_mat, cheb_D2_mat_dirichlet_robin
+from chebpy import cheb_D1_mat
+from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
 from chebpy import etdrk4_coeff_ndiag
 
 __all__ = ['cheb_mde_oss',
@@ -25,6 +26,7 @@ __all__ = ['cheb_mde_oss',
            'cheb_mde_neumann_etdrk4',
            'cheb_mde_robin_etdrk4',
            'cheb_mde_robin_etdrk4_1',
+           'cheb_mde_robin_etdrk4_2',
            'cheb_mde_mixed_etdrk4',
            'cheb_allen_cahn_etdrk4',
           ]
@@ -310,7 +312,7 @@ def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
     return (u, .5*(xx+1.)*Lx)
 
 
-def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
+def cheb_mde_robin_etdrk4_3(W, u0, Lx, Ns, ka, kb):
     '''
     This produce incorrect result. Should not be used.
     '''
@@ -368,6 +370,46 @@ def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
     u[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
     u[1:N] = v[:]
     return (u, .5*(xx+1.)*Lx)
+
+
+def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
+    ds = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u.copy()
+    w = -W
+    w.shape = (N+1, 1)
+
+    # Robin boundary
+    D1t, L, xx = cheb_D2_mat_robin_robin(N, ka, kb)
+
+    h = ds
+    M = 32
+    R = 15.
+    L = (4. / Lx**2) * L
+    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+
+    A = h * L
+    E = expm(A)
+    E2 = expm(A/2)
+
+    for j in xrange(Ns-1):
+        Nu = w * v
+
+        a = np.dot(E2, v) + np.dot(Q, Nu)
+        Na = w * a
+
+        b = np.dot(E2, v) + np.dot(Q, Na)
+        Nb = w * b
+
+        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
+        Nc = w * c
+
+        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
+            np.dot(f3, Nc)
+
+    return (v, .5*(xx+1.)*Lx)
 
 
 def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb):
