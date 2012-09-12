@@ -28,9 +28,10 @@ def barycentric_weights(x):
     Compute the Barycentric weights for Barycentric Lagrange interpolation.
 
     See 
-    * Berrut JP and Trefethn LN, SIAM Review, 2004, 45, 501-517
+    * Berrut JP and Trefethn LN, SIAM Review, 2004, 45, 501-517.
     * Kopriva DA, Implementing Spectral Methods for Partial Differential 
-    Equations: Algorithms for Scientists and Engineers, 2009, Springer
+    Equations: Algorithms for Scientists and Engineers, 2009, Springer, Chapter
+    3, section 4.
     '''
     N = np.size(x) - 1
     w = np.ones_like(x)
@@ -56,7 +57,7 @@ def barycentric_weights_cg(N):
 
 def barycentric_weights_cgl(N):
     '''
-    Barycentric weights for Chebyshev Gaussian grids.
+    Barycentric weights for Chebyshev Gauss-Lobatto grids.
     The CG grids are
         x_j = cos(j*pi/N), j = 0, 1, 2, ..., N
     The weights are

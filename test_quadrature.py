@@ -151,7 +151,7 @@ def test_quadrature_cgl():
 
 
 if __name__ == '__main__':
-    test_quadrature_clencurt()
-    #test_quadrature_cgl()
+    #test_quadrature_clencurt()
+    test_quadrature_cgl()
     #test_clencurt_weights()
 

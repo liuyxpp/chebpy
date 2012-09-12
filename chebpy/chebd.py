@@ -67,6 +67,10 @@ def cheb_D1_fft(v):
     '''
     Evaluate 1st derivative with Chebyshev polynomials via fast Fourier 
     transform (FFT).
+
+    Ref:
+        Trefethen, LN **Spectral Methods in Matlab**, 2000
+
     :param:v: 1D numpy array contains the data to be differentiated.
 
     '''
@@ -115,6 +119,11 @@ def cheb_D1_fchebt(v):
     '''
     Evaluate 1st derivative with Chebyshev polynomials via fast Fourier 
     transform (FFT).
+
+    Ref:
+        Kopriva, DA **Implementing Spectral Methods for Partial Differential
+        Equations**, 2009
+
     :param:v: 1D numpy array contains the data to be differentiated.
 
     '''

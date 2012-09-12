@@ -9,3 +9,4 @@ chebpy.egg-info/*
 *.png
 *.bak
 *.tar.gz
+*.tar.Z

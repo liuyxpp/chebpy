@@ -115,7 +115,7 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: Education',
         'License :: OSI Approved :: BSD License',
-        'Operating System :: POSIX :: Linux',
+        'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering',
         'Topic :: Education',

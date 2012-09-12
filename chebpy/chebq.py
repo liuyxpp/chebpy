@@ -32,12 +32,14 @@ def cheb_quadrature_cgl(f):
     N = np.size(f) - 1
     theta = np.arange(N+1) * np.pi / N
     x = np.cos(theta)
-    #w = np.zeros_like(x)
-    #w += np.pi / N
-    w = np.pi/N * (1-x**2)
-    #w[0] *= .5
-    #w[N] *= .5
-    return np.dot(w[1:N], f[1:N] / np.sqrt(1-x[1:N]**2))
+    w = np.zeros_like(x)
+    w += np.pi / N
+    #w = np.pi/N
+    w[0] *= .5
+    w[N] *= .5
+    #return np.dot(w[1:N], f[1:N] * np.sqrt(1-x[1:N]**2))
+    return np.dot(w, f * np.sqrt(1-x**2))
+    #return np.dot(w[1:N], f[1:N])
 
 
 def clencurt_weights(N):
