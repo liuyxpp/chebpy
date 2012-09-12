@@ -15,18 +15,16 @@ from scipy.fftpack import dst, idst, dct, idct
 import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
-from chebpy import cheb_D1_mat
+from chebpy import cheb_D1_mat, cheb_D2_mat_dirichlet_robin
 from chebpy import etdrk4_coeff_ndiag
 
 __all__ = ['cheb_mde_oss',
            'cheb_mde_osc',
            'cheb_mde_neumann_split',
-           'cheb_mde_etdrk4',
+           'cheb_mde_dirichlet_etdrk4',
            'cheb_mde_neumann_etdrk4',
            'cheb_mde_robin_etdrk4',
            'cheb_mde_robin_etdrk4_1',
-           'cheb_mde_robin_etdrk4_2',
-           'cheb_mde_robin_etdrk4_3',
            'cheb_mde_mixed_etdrk4',
            'cheb_allen_cahn_etdrk4',
           ]
@@ -138,7 +136,7 @@ def cheb_mde_neumann_split(W, u0, Lx, Ns):
     return (u, x) 
 
 
-def cheb_mde_etdrk4(W, u0, Lx, Ns):
+def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
     '''
     Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
     This method allows very large time step.
@@ -246,86 +244,6 @@ def cheb_mde_neumann_etdrk4(W, u0, Lx, Ns):
     return (v, .5*(xx+1.)*Lx)
 
 
-def cheb_mde_robin_etdrk4_bak(W, Lx, Ns, ka, kb):
-    '''
-    Solution of modified diffusion equation (MDE) with 
-    Neumann boundary condition (NBC) by ETDRK4 shceme.
-    NBC is also called Fixed flux boundary condition.
-
-    The MDE is:
-        dq/dt = Dq + Wq
-        kq + dq/dx = 0, x=+1 or x=-1, t>=0
-        q(x,0) = 1, -1<x<1
-    where D is Laplace operator.
-    '''
-
-    ds = 1. / (Ns-1)
-    N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
-    u = np.ones((N+1,1))
-    v = u.copy()
-    v[0] = 0.
-    v[N] = 0.
-    w = -W
-    w.shape = (N+1, 1)
-
-    h = ds
-    M = 32
-    R = 15.
-    D1 = np.zeros_like(D)
-    D1[1:N,:] = D[1:N,:]
-    L = np.dot(D, D1) 
-    L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
-
-    A = h * L
-    E = expm(A)
-    E2 = expm(A/2)
-
-    # Robin boundary
-    d00 = D[0,0]; d0N = D[0,N]; dN0 = D[N,0]; dNN = D[N,N]
-    li0 = L[1:N,0].copy(); liN = L[1:N,N].copy()
-    li0.shape = (N-1, 1)
-    liN.shape = (N-1, 1)
-    kk = (ka + d00) * (kb + dNN) - d0N * dN0
-
-    for j in xrange(Ns-1):
-        Nu = w * v
-        a = np.dot(E2, v) + np.dot(Q, Nu)
-
-        sum0 = np.dot(D[0,1:N], a[1:N])
-        sumN = np.dot(D[N,1:N], a[1:N])
-        a[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-        a[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
-        Na = w * a
-        b = np.dot(E2, v) + np.dot(Q, Na)
-
-        sum0 = np.dot(D[0,1:N], b[1:N])
-        sumN = np.dot(D[N,1:N], b[1:N])
-        b[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-        b[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
-        Nb = w * b
-        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
-
-        sum0 = np.dot(D[0,1:N], c[1:N])
-        sumN = np.dot(D[N,1:N], c[1:N])
-        c[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-        c[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
-        Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
-            np.dot(f3, Nc)
-        sum0 = np.dot(D[0,1:N], v[1:N])
-        sumN = np.dot(D[N,1:N], v[1:N])
-        v[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-        v[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
-
-    #sum0 = np.dot(D[0,1:N], v[1:N])
-    #sumN = np.dot(D[N,1:N], v[1:N])
-    #v[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-    #v[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
-    return (v, .5*(xx+1.)*Lx)
-
-
 def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
     '''
     Solution of modified diffusion equation (MDE) with 
@@ -334,7 +252,7 @@ def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
 
     The MDE is:
         dq/dt = Dq + Wq
-        kq + dq/dx = 0, x=+1 or x=-1, t>=0
+        kq + dq/dx = 0, x=+1(kb) or x=-1(ka), t>=0
         q(x,0) = 1, -1<x<1
     where D is Laplace operator.
     '''
@@ -351,12 +269,12 @@ def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
     # Robin boundary
     d00 = D[0,0]; d0N = D[0,N]; dN0 = D[N,0]; dNN = D[N,N]
     D2 = np.dot(D, D)
-    kk = (ka + d00) * (kb + dNN) - d0N * dN0
+    kk = (kb + d00) * (ka + dNN) - d0N * dN0
     L = np.zeros_like(D2)
     for i in xrange(1,N):
         for j in xrange(1,N):
-            Xij = (d0N * D2[i,0] - (ka+d00) * D2[i,N]) / kk * D[N,j]
-            Yij = (dN0 * D2[i,N] - (kb+dNN) * D2[i,0]) / kk * D[0,j]
+            Xij = (d0N * D2[i,0] - (kb+d00) * D2[i,N]) / kk * D[N,j]
+            Yij = (dN0 * D2[i,N] - (ka+dNN) * D2[i,0]) / kk * D[0,j]
             L[i,j] = D2[i,j] + Xij + Yij
 
     h = ds
@@ -386,23 +304,15 @@ def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
 
     sum0 = np.dot(D[0,1:N], v)
     sumN = np.dot(D[N,1:N], v)
-    u[0] = (d0N * sumN - (kb + dNN) * sum0) / kk
-    u[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
+    u[0] = (d0N * sumN - (ka + dNN) * sum0) / kk
+    u[N] = (dN0 * sum0 - (kb + d00) * sumN) / kk
     u[1:N] = v[:]
     return (u, .5*(xx+1.)*Lx)
 
 
 def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
     '''
-    Solution of modified diffusion equation (MDE) with 
-    Neumann boundary condition (NBC) by ETDRK4 shceme.
-    NBC is also called Fixed flux boundary condition.
-
-    The MDE is:
-        dq/dt = Dq + Wq
-        kq + dq/dx = 0, x=+1 or x=-1, t>=0
-        q(x,0) = 1, -1<x<1
-    where D is Laplace operator.
+    This produce incorrect result. Should not be used.
     '''
 
     ds = 1. / (Ns-1)
@@ -458,70 +368,6 @@ def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
     u[N] = (dN0 * sum0 - (ka + d00) * sumN) / kk
     u[1:N] = v[:]
     return (u, .5*(xx+1.)*Lx)
-
-
-def cheb_mde_robin_etdrk4_3(W, u0, Lx, Ns, ka, kb):
-    '''
-    Solution of modified diffusion equation (MDE) with 
-    Robin boundary condition (RBC) by ETDRK4 shceme.
-
-    The MDE is:
-        dq/dt = Dq + Wq
-        kq + dq/dx = 0, x=+1 or x=-1, t>=0
-        q(x,0) = 1, -1<x<1
-    where D is Laplace operator.
-
-    The disrete matrix for Laplace operator is
-        sum_{k=0}^N L_{ik} u_k
-    where
-        L_{ik} = D_{ij} * D1_{jk}, for i = 0, 1, ..., N; k = 1, 2, ..., N-1
-    with
-        D1_{jk} = D_{jk}    for j = 1, 2, ..., N-1; k = 0, 1, ..., N
-        D1_{jk} = 0         for j = 0 or j = N; k = 0, 1, ..., N
-    and
-        L-{i0} = D_{ij} * D1_{j0} - ka * D_{i0}
-        L-{iN} = D_{ij} * D1_{jN} - ka * D_{iN}
-
-    '''
-
-    ds = 1. / (Ns-1)
-    N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
-    u = u0.copy()
-    u.shape = (N+1,1)
-    v = u.copy()
-    w = -W
-    w.shape = (N+1, 1)
-
-    h = ds
-    M = 32
-    R = 15.
-    D1 = np.zeros_like(D)
-    D1[1:N,:] = D[1:N,:]
-    p1 = D[:,0]
-    p1.shape = (N+1,1)
-    p2 = D[:,N]
-    p2.shape = (N+1,1)
-    L = np.dot(D, D1) 
-    L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
-
-    A = h * L
-    E = expm(A)
-    E2 = expm(A/2)
-
-    for j in xrange(Ns-1):
-        Nu = w * v - p1 * kb * v[0] - p2 * ka * v[N]
-        a = np.dot(E2, v) + np.dot(Q, Nu)
-        Na = w * a
-        b = np.dot(E2, v) + np.dot(Q, Na)
-        Nb = w * b
-        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
-        Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
-            np.dot(f3, Nc)
-
-    return (v, .5*(xx+1.)*Lx)
 
 
 def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb):
@@ -586,7 +432,7 @@ def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb):
     return (v, .5*(xx+1.)*Lx)
 
 
-def cheb_mde_mixed_etdrk4(W, u0, Lx, Ns, ka):
+def cheb_mde_mixed_etdrk4(W, u0, Lx, Ns, kb):
     '''
     Solution of modified diffusion equation (MDE) with 
     mixed DBC-RBC by ETDRK4 shceme.
@@ -594,9 +440,9 @@ def cheb_mde_mixed_etdrk4(W, u0, Lx, Ns, ka):
     The MDE is:
         dq/dt = Dq + Wq
     where D is Laplace operator.
-    For DBC-RBC
+    For RBC-DBC
+        kq + dq/dx = 0, x=-1 (ka), t>=0
         q = 0, x=+1, t>=0
-        kq + dq/dx = 0, x=-1, t>=0
         q(x,0) = 1, -1<x<1
     The disrete matrix for Laplace operator is
         sum_{k=1}^N L_{ik} u_k
@@ -608,32 +454,27 @@ def cheb_mde_mixed_etdrk4(W, u0, Lx, Ns, ka):
     and
         L_{iN} = D_{ij} * D1_{jN} - ka * D_{iN}
 
-    For RBC-DBC
-        kq + dq/dx = 0, x=+1, t>=0
+    For DBC-RBC
         q = 0, x=-1, t>=0
+        kq + dq/dx = 0, x=+1, t>=0
         q(x,0) = 1, -1<x<1
 
     '''
 
     ds = 1. / (Ns-1)
     N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
     u = u0.copy()
     u.shape = (N+1,1)
     v = np.zeros(N)
-    v = u[1:]
+    v = u[:-1]
     v.shape = (N, 1)
-    w = -W[1:]
+    w = -W[:-1]
     w.shape = (N, 1)
 
     h = ds
     M = 32
     R = 15.
-    D1 = D[1:,1:]
-    D2 = np.zeros_like(D1)
-    D2[0:N-1,:] = D1[0:N-1,:]
-    L = np.dot(D1, D2) 
-    L[:,N-1] -= D1[:,N-1] * ka
+    D1, L, xx = cheb_D2_mat_dirichlet_robin(N, kb)
     L = (4. / Lx**2) * L
     Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
 
@@ -652,7 +493,7 @@ def cheb_mde_mixed_etdrk4(W, u0, Lx, Ns, ka):
         v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
             np.dot(f3, Nc)
 
-    u[1:] = v
+    u[:-1] = v
     return (u, .5*(xx+1.)*Lx)
 
 

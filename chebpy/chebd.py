@@ -22,6 +22,8 @@ from scipy.fftpack import dct, idct
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 
 __all__ = ['cheb_D1_mat',
+           'cheb_D2_mat_dirichlet_robin',
+           'cheb_D2_mat_robin_dirichlet',
            'cheb_D1_fft',
            'cheb_D1_dct',
            'cheb_D1_fchebt']
@@ -61,6 +63,139 @@ def cheb_D1_mat(N):
     D = np.dot(c, 1.0/c.T) / (dX + np.eye(N+1))
     D -= np.diag(np.sum(D, axis=1))
     return (D, x)
+
+
+def cheb_D2_mat_dirichlet_robin(N, kb):
+    '''
+    Chebyshev differentiation matrix subjecting to DBC-RBC.
+    DBC-RBC: 
+        Dirichlet at x=-1 and Robin at x=+1
+    Note: 
+        DBC-NBC is a special case with kb = 0
+
+    Ref:
+        Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite" ACM Trans. Math. Softw. 2000, 26, 465.
+
+    :res:D1t: 1st order differentiation matrix, size: N x N
+    :res:D2t: 2nd order differentiation matrix, size: N x N
+    :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
+    '''
+    D0 = np.eye(N+1)
+    D1, x = cheb_D1_mat(N) # Note: x is a column vector
+    D2 = np.dot(D1, D1)
+
+    J = np.arange(1,N)
+    K = np.arange(0,N)
+    xjrow = 1 - x[J].T
+    xkcol = 1 - x[K]
+    oner = np.ones(xkcol.size)
+    oner.shape = (oner.size, 1) # to column vector
+
+    fac0 = np.dot(oner, 1/xjrow)
+    fac1 = np.dot(xkcol, 1/xjrow)
+    X, Y = np.meshgrid(K, J)
+    X = X.T; Y = Y.T
+    D1t = fac1 * D1[X,Y] - fac0 * D0[X,Y]
+    D2t = fac1 * D2[X,Y] - 2 * fac0 * D1[X,Y]
+
+    cfac = D1[0,0] + kb;
+    fcol1 = -cfac * D0[:N,0] + (1 + cfac * xkcol.T) * D1[:N,0]
+    fcol2 = -2 * cfac * D1[:N,0] + (1 + cfac * xkcol.T) * D2[:N,0]
+    fcol1.shape = (fcol1.size, 1)
+    fcol2.shape = (fcol2.size, 1)
+    D1t = np.hstack((fcol1, D1t))
+    D2t = np.hstack((fcol2, D2t))
+
+    return D1t, D2t, x
+
+
+def cheb_D2_mat_robin_dirichlet(N, ka):
+    '''
+    Chebyshev differentiation matrix subjecting to RBC-DBC.
+    RBC-DBC: 
+        Robin at x=-1 and Dirichlet at x=+1
+    Note: 
+        NBC-DBC is a special case with ka = 0
+
+    Ref:
+        Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite" ACM Trans. Math. Softw. 2000, 26, 465.
+
+    :res:D1t: 1st order differentiation matrix, size: N x N
+    :res:D2t: 2nd order differentiation matrix, size: N x N
+    :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
+    '''
+    D0 = np.eye(N+1)
+    D1, x = cheb_D1_mat(N) # Note: x is a column vector
+    D2 = np.dot(D1, D1)
+
+    J = np.arange(1,N)
+    K = np.arange(1,N+1)
+    xjrow = 1 + x[J].T
+    xkcol = 1 + x[K]
+    oner = np.ones(xkcol.size)
+    oner.shape = (oner.size, 1) # to column vector
+
+    fac0 = np.dot(oner, 1/xjrow)
+    fac1 = np.dot(xkcol, 1/xjrow)
+    X, Y = np.meshgrid(K, J)
+    X = X.T; Y = Y.T
+    D1t = fac1 * D1[X,Y] + fac0 * D0[X,Y]
+    D2t = fac1 * D2[X,Y] + 2 * fac0 * D1[X,Y]
+
+    cfac = D1[-1,-1] + ka;
+    lcol1 = -cfac * D0[1:,-1] + (1 - cfac * xkcol.T) * D1[1:,-1]
+    lcol2 = -2 * cfac * D1[1:,-1] + (1 - cfac * xkcol.T) * D2[1:,-1]
+    lcol1.shape = (lcol1.size, 1)
+    lcol2.shape = (lcol2.size, 1)
+    D1t = np.hstack((D1t, lcol1))
+    D2t = np.hstack((D2t, lcol2))
+
+    return D1t, D2t, x
+
+
+def cheb_D2_mat_robin_robin(N, ka, kb):
+    '''
+    Chebyshev differentiation matrix subjecting to RBC-RBC.
+    RBC-RBC: Robin at x=-1 and x=+1
+    Note: 
+        NBC-RBC is a special case with ka = 0
+        RBC-NBC is a special case with kb = 0
+        NBC-NBC is a special case with ka = 0 and kb = 0
+
+    Ref:
+        Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite" ACM Trans. Math. Softw. 2000, 26, 465.
+
+    :res:D1t: 1st order differentiation matrix, size: N x N
+    :res:D2t: 2nd order differentiation matrix, size: N x N
+    :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
+    '''
+    D0 = np.eye(N+1)
+    D1, x = cheb_D1_mat(N) # Note: x is a column vector
+    D2 = np.dot(D1, D1)
+
+    J = np.arange(1,N)
+    K = np.arange(1,N+1)
+    xjrow = 1 + x[J].T
+    xkcol = 1 + x[K]
+    oner = np.ones(xkcol.size)
+    oner.shape = (oner.size, 1) # to column vector
+
+    fac0 = np.dot(oner, 1/xjrow)
+    fac1 = np.dot(xkcol, 1/xjrow)
+    X, Y = np.meshgrid(K, J)
+    X = X.T; Y = Y.T
+    D1t = fac1 * D1[X,Y] + fac0 * D0[X,Y]
+    D2t = fac1 * D2[X,Y] + 2 * fac0 * D1[X,Y]
+
+    cfac = D1[-1,-1] + ka;
+    lcol1 = -cfac * D0[1:,-1] + (1 - cfac * xkcol.T) * D1[1:,-1]
+    lcol2 = -2 * cfac * D1[1:,-1] + (1 - cfac * xkcol.T) * D2[1:,-1]
+    lcol1.shape = (lcol1.size, 1)
+    lcol2.shape = (lcol2.size, 1)
+    D1t = np.hstack((D1t, lcol1))
+    D2t = np.hstack((D2t, lcol2))
+
+    return D1t, D2t, x
 
 
 def cheb_D1_fft(v):
