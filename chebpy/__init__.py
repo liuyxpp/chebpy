@@ -20,6 +20,7 @@ __license__ = "BSD License"
 __version__ = "0.1"
 
 from .misc import *
+from .tridiag import *
 from .cheb import * # Chebyshev polynomials
 from .chebt import * # Chebyshev transform
 from .chebi import * # Chebyshev interpolations

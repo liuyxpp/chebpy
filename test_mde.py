@@ -14,6 +14,7 @@ from numpy.fft import fft, ifft
 import matplotlib.pyplot as plt
 
 from chebpy import cheb_mde_oss, cheb_mde_osc
+from chebpy import cheb_mde_dirichlet_oscheb
 from chebpy import cheb_mde_neumann_split
 from chebpy import cheb_mde_dirichlet_etdrk4
 from chebpy import cheb_mde_neumann_etdrk4
@@ -28,16 +29,16 @@ from chebpy import cheb_interpolation_1d
 
 def test_cheb_mde_dirichlet():
     L = 10
-    N = 64
+    N = 128
     Ns = 101
 
     ii = np.arange(N+1)
     x = 1. * ii * L / N
     sech = 1. / np.cosh(.75 * (2.*x - L))
     W = 1. - 2. * sech * sech
-    plt.plot(x, W)
-    plt.axis([0, 10, -1.1, 1.1])
-    plt.show()
+    #plt.plot(x, W)
+    #plt.axis([0, 10, -1.1, 1.1])
+    #plt.show()
 
     u0 = np.ones_like(x)
     u0[0] = 0.; u0[N] = 0.;
@@ -47,19 +48,23 @@ def test_cheb_mde_dirichlet():
     x = .5 * (x + 1) * L
     sech = 1. / np.cosh(.75 * (2.*x - L))
     W = 1. - 2. * sech * sech
-    plt.plot(x, W)
-    plt.axis([0, 10, -1.1, 1.1,])
-    plt.show()
+    #plt.plot(x, W)
+    #plt.axis([0, 10, -1.1, 1.1,])
+    #plt.show()
 
-    Ns = 11
     u0 = np.ones((N+1, 1))
     u0[0] = 0; u0[N] = 0;
     q2, x2 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns)
+
+    q3 = cheb_mde_dirichlet_oscheb(W, u0, L, Ns)
+    print q3
 
     plt.plot(x1, q1)
     #plt.plot(x1, q1, '.')
     plt.plot(x2, q2, 'r')
     #plt.plot(x2, q2, 'r.')
+    plt.plot(x, q3, 'g')
+    #plt.plot(x, q3, 'g.')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
 
@@ -179,10 +184,12 @@ def test_accuracy_cheb_mde_dirichlet():
     x = .5 * (x + 1) * L
     sech = 1. / np.cosh(.75 * (2.*x - L))
     W2 = 1. - 2. * sech * sech
+    W3 = W2.copy()
 
     u0 = np.ones_like(W2)
     u0[0] = 0.; u0[N] = 0.
     q2_ref, x2 = cheb_mde_dirichlet_etdrk4(W2, u0, L, Ns_ref)
+    q3_ref = cheb_mde_dirichlet_oscheb(W3, u0, L, Ns_ref)
 
     q1_ref2 = cheb_interpolation_1d(np.linspace(-1,1,N+1), q2_ref)
     q1_ref2.shape = (N+1,)
@@ -190,13 +197,15 @@ def test_accuracy_cheb_mde_dirichlet():
     print np.linalg.norm(q1_ref2 - q1_ref) / N
 
     plt.plot(x1, q1_ref)
-    plt.plot(x1, q1_ref2)
+    #plt.plot(x1, q1_ref2)
     plt.plot(x2, q2_ref, 'r')
+    plt.plot(x2, q3_ref, 'g')
     plt.show()
 
     # Ns = 10^t
     errs1 = []
     errs2 = []
+    errs3 = []
     Nss = []
     for Ns in np.round(np.power(10, np.linspace(0,4,10))):
         Ns = int(Ns) + 1
@@ -206,19 +215,25 @@ def test_accuracy_cheb_mde_dirichlet():
         u0 = np.ones_like(W2)
         u0[0] = 0.; u0[N] = 0.
         q2, x2 = cheb_mde_dirichlet_etdrk4(W2, u0, L, Ns)
+        q3 = cheb_mde_dirichlet_oscheb(W3, u0, L, Ns)
         err1 = np.max(np.abs(q1 - q1_ref)) / np.max(q1_ref)
         err2 = np.max(np.abs(q2 - q2_ref)) / np.max(q2_ref)
+        err3 = np.max(np.abs(q3 - q3_ref)) / np.max(q3_ref)
         #err1 = np.linalg.norm(q1-q1_ref) / N
         #err2 = np.linalg.norm(q2-q2_ref) / N
+        #err3 = np.linalg.norm(q3-q3_ref) / N
         Nss.append(1./Ns)
         errs1.append(err1)
         errs2.append(err2)
-        print Ns, '\t\t', err1, '\t\t\t', err2
+        errs3.append(err3)
+        print Ns, '\t\t', err1, '\t\t\t', err2, '\t\t\t', err3
 
     plt.plot(Nss, errs1)
     plt.plot(Nss, errs1, '.')
     plt.plot(Nss, errs2, 'r')
     plt.plot(Nss, errs2, 'r.')
+    plt.plot(Nss, errs3, 'g')
+    plt.plot(Nss, errs3, 'g.')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('Relative timestep')
@@ -293,10 +308,10 @@ def test_accuracy_cheb_mde_neumann():
 
 def test_accuracy_cheb_mde_robin():
     L = 10
-    N = 128
-    ka = -1.0
-    kb = 0.1
-    Ns_ref = 20000+1 # highest accuracy for reference. h = 1e-4
+    N = 64
+    ka = .0
+    kb = .0
+    Ns_ref = 200000+1 # highest accuracy for reference. h = 1e-4
 
     ii = np.arange(N+1)
     x = np.cos(np.pi * ii / N)
@@ -627,9 +642,9 @@ if __name__ == '__main__':
     #test_cheb_mde_neumann()
     #test_cheb_mde_robin()
     #test_cheb_mde_mixed()
-    #test_accuracy_cheb_mde_dirichlet()
+    test_accuracy_cheb_mde_dirichlet()
     #test_accuracy_cheb_mde_neumann()
-    test_accuracy_cheb_mde_robin()
+    #test_accuracy_cheb_mde_robin()
     #test_cheb_allen_cahn_etdrk4()
     #test_complex_contour_integral()
     #test_speed_space_etdrk4()
