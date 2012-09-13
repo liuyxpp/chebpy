@@ -108,7 +108,7 @@ def test_cheb_mde_neumann():
     #plt.plot(x2, q2, 'r.')
     plt.plot(x3, q3, 'g')
     plt.plot(x4, q4, 'k')
-    plt.plot(x4, q5, 'c')
+    plt.plot(x4, q5, 'm')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
 
