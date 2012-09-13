@@ -14,7 +14,7 @@ from numpy.fft import fft, ifft
 import matplotlib.pyplot as plt
 
 from chebpy import cheb_mde_oss, cheb_mde_osc
-from chebpy import cheb_mde_dirichlet_oscheb
+from chebpy import cheb_mde_dirichlet_oscheb, cheb_mde_neumann_oscheb
 from chebpy import cheb_mde_neumann_split
 from chebpy import cheb_mde_dirichlet_etdrk4
 from chebpy import cheb_mde_neumann_etdrk4
@@ -71,7 +71,7 @@ def test_cheb_mde_dirichlet():
 
 def test_cheb_mde_neumann():
     L = 10
-    N = 256
+    N = 128
     Ns = 201
 
     ii = np.arange(N+1)
@@ -98,6 +98,7 @@ def test_cheb_mde_neumann():
     q2, x2 = cheb_mde_neumann_etdrk4(W, u0, L, Ns)
     q3, x3 = cheb_mde_robin_etdrk4(W, u0, L, Ns, 0., 0.)
     q4, x4 = cheb_mde_robin_etdrk4_2(W, u0, L, Ns, 0., 0.)
+    q5 = cheb_mde_neumann_oscheb(W, u0, L, Ns)
     print np.max(np.abs(q2-q3))
     print np.max(np.abs(q4-q3))
 
@@ -107,6 +108,7 @@ def test_cheb_mde_neumann():
     #plt.plot(x2, q2, 'r.')
     plt.plot(x3, q3, 'g')
     plt.plot(x4, q4, 'k')
+    plt.plot(x4, q5, 'c')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
 
@@ -639,10 +641,10 @@ def f(t):
 
 if __name__ == '__main__':
     #test_cheb_mde_dirichlet()
-    #test_cheb_mde_neumann()
+    test_cheb_mde_neumann()
     #test_cheb_mde_robin()
     #test_cheb_mde_mixed()
-    test_accuracy_cheb_mde_dirichlet()
+    #test_accuracy_cheb_mde_dirichlet()
     #test_accuracy_cheb_mde_neumann()
     #test_accuracy_cheb_mde_robin()
     #test_cheb_allen_cahn_etdrk4()
