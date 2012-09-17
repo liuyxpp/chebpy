@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 from chebpy import cheb_D1_mat
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
-from chebpy import etdrk4_coeff_ndiag
+from chebpy import etdrk4_coeff_nondiag
 from chebpy import solve_tridiag_complex_thual
 
 __all__ = ['cheb_mde_oss',
@@ -141,7 +141,7 @@ def cheb_mde_neumann_split(W, u0, Lx, Ns):
     return (u, x) 
 
 
-def cheb_mde_dirichlet_oscheb(W, u0, Lx, Ns):
+def cheb_mde_oscheb(W, u0, Lx, Ns, bc_even, bc_odd):
     '''
     Solution of modified diffusion equation (MDE) 
     via Strang operator splitting as time-stepping scheme 
@@ -202,8 +202,10 @@ def cheb_mde_dirichlet_oscheb(W, u0, Lx, Ns):
     rg[0:N-1:2] = re
     rg[1:N-1:2] = ro
 
-    dbce = np.ones(pe.size + 1)
-    dbco = np.ones(po.size + 1)
+    #dbce = np.ones(pe.size + 1)
+    #dbco = np.ones(po.size + 1)
+    dbce = bc_even
+    dbco = bc_odd
     f = np.zeros(u.size + 2) # u.size is N+1
     ge = np.zeros(pe.size + 1)
     go = np.zeros(po.size + 1)
@@ -243,6 +245,39 @@ def cheb_mde_dirichlet_oscheb(W, u0, Lx, Ns):
         u = 2. * (K/ds)**2 * expw * u
 
     return u
+
+
+def cheb_mde_dirichlet_oscheb(W, u0, Lx, Ns):
+    '''
+    Solution of modified diffusion equation (MDE) 
+    via Strang operator splitting as time-stepping scheme 
+    and fast Chebyshev transform.
+
+    Ref:
+        Her, S. M.; Garcia-Cervera, C. J.; Fredrickson, G. H. macromolecules, 2012, 45, 2905.
+
+    The MDE is:
+        dq/dt = Dq - Wq
+    in the interval [0, L], with homogeneous Dirichlet boundary conditions at both boundaries.
+    where D is Laplace operator.
+    Discretization:
+        x_j = cos(j*L_x/N), j = 0, 1, 2, ..., N
+
+    :param:W: W_j, j = 0, 1, ..., N
+    :param:u0: u0_j, j = 0, 1, ..., N
+    :param:Lx: the physical length of the interval [0, L_x]
+    :param:Ns: contour index, s_j, j = 0, 1, ..., N_s
+    '''
+    N = u0.size - 1 # 0, 1, ..., N
+    if N % 2 == 0:
+        Ne = N/2 + 1 # even index: 0, 2, ..., N
+    else:
+        Ne = (N-1)/2 + 1 # even index: 0, 2, ..., N-1
+    No = (N+1) - Ne
+    dbce = np.ones(Ne)
+    dbco = np.ones(No)
+
+    return cheb_mde_oscheb(W, u0, Lx, Ns, dbce, dbco)
 
 
 def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
@@ -266,87 +301,16 @@ def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
     :param:Lx: the physical length of the interval [0, L_x]
     :param:Ns: contour index, s_j, j = 0, 1, ..., N_s
     '''
-    ds = 1. / (Ns - 1)
     N = u0.size - 1
-    u = u0.reshape(u0.size) # force 1D array
-    K = (Lx/2.)**2
-    lambp = K * (1. + 1j) / ds # \lambda_+
-    lambn = K * (1. - 1j) / ds # \lambda_-
+    if N % 2 == 0:
+        Ne = N/2 + 1 # even index: 0, 2, ..., N
+    else:
+        Ne = (N-1)/2 + 1 # even index: 0, 2, ..., N-1
+    No = (N+1) - Ne
+    nbce = np.arange(Ne)**2
+    nbco = np.arange(No)**2
 
-    c = np.ones(N+1)
-    c[0] = 2.; c[-1] = 2. # c_0=c_N=2, c_1=c_2=...=c_{N-1}=1
-    b = np.ones(N+3)
-    b[N-1:] = 0. # b_{N-1}=...=b_{N+2}=0, b_0=b_1=...=b_{N-2}=1
-    n = np.arange(N+1)
-    pe = 0.25 * c[0:N-1:2] / n[2:N+1:2] / (n[2:N+1:2] - 1)
-    po = 0.25 * c[1:N-1:2] / n[3:N+1:2] / (n[3:N+1:2] - 1)
-    pep = -pe * lambp
-    pen = -pe * lambn
-    pop = -po * lambp
-    pon = -po * lambn
-    qe = 0.5 * b[2:N+1:2] / (n[2:N+1:2]**2 - 1) 
-    qo = 0.5 * b[3:N+1:2] / (n[3:N+1:2]**2 - 1)
-    qep = 1 + qe * lambp
-    qen = 1 + qe * lambn
-    qop = 1 + qo * lambp
-    qon = 1 + qo * lambn
-    re = 0.25 * b[4:N+3:2] / n[2:N+1:2] / (n[2:N+1:2] + 1)
-    ro = 0.25 * b[5:N+3:2] / n[3:N+1:2] / (n[3:N+1:2] + 1)
-    rep = -re * lambp
-    ren = -re * lambn
-    rop = -ro * lambp
-    ron = -ro * lambn
-    pg = np.zeros(pe.size + po.size)
-    pg[0:N-1:2] = pe
-    pg[1:N-1:2] = po
-    qg = np.zeros(qe.size + qo.size)
-    qg[0:N-1:2] = qe
-    qg[1:N-1:2] = qo
-    rg = np.zeros(re.size + ro.size)
-    rg[0:N-1:2] = re
-    rg[1:N-1:2] = ro
-
-    dbce = np.arange(pe.size + 1)**2
-    dbco = np.arange(po.size + 1)**2
-    f = np.zeros(u.size + 2) # u.size is N+1
-    ge = np.zeros(pe.size + 1)
-    go = np.zeros(po.size + 1)
-
-    uc = u.astype(complex)
-    fc = f.astype(complex)
-    gec = ge.astype(complex)
-    goc = go.astype(complex)
-    
-    expw = np.exp(-0.5 * ds * W)
-    for i in xrange(Ns-1):
-        u = expw * u
-
-        u = cheb_fast_transform(u)
-
-        f[:N+1] = u
-        g = pg * f[0:N-1] - qg * f[2:N+1] + rg * f[4:N+3]
-        ge[1:] = g[0:N-1:2]
-        go[1:] = g[1:N-1:2]
-        ue = solve_tridiag_complex_thual(pen, qen, ren, dbce, ge)
-        uo = solve_tridiag_complex_thual(pon, qon, ron, dbco, go)
-        uc[0:N+1:2] = ue
-        uc[1:N+1:2] = uo
-
-        fc[:N+1] = uc
-        gc = pg * fc[0:N-1] - qg * fc[2:N+1] + rg * fc[4:N+3]
-        gec[1:] = gc[0:N-1:2]
-        goc[1:] = gc[1:N-1:2]
-        ue = solve_tridiag_complex_thual(pep, qep, rep, dbce, gec)
-        uo = solve_tridiag_complex_thual(pop, qop, rop, dbco, goc)
-        uc[0:N+1:2] = ue
-        uc[1:N+1:2] = uo
-        u = uc.real
-
-        u = cheb_inverse_fast_transform(u)
-
-        u = 2. * (K/ds)**2 * expw * u
-
-    return u
+    return cheb_mde_oscheb(W, u0, Lx, Ns, nbce, nbco)
 
 
 def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
@@ -384,9 +348,19 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
     h = ds
     M = 32
     R = 15.
+    if N > 64:
+        M = 2048
+        R = 30.
+    if N > 256:
+        M = 128
+        R = 60.
+    if N > 1024:
+        M = 256
+        R = 120.
+        
     L = np.dot(D, D) # L = D^2
     L = (4. / Lx**2) * L[1:N,1:N]
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
@@ -437,7 +411,7 @@ def cheb_mde_neumann_etdrk4(W, u0, Lx, Ns):
     D1[1:N,:] = D[1:N,:]
     L = np.dot(D, D1) 
     L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
@@ -494,7 +468,7 @@ def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
     M = 32
     R = 15.
     L = (4. / Lx**2) * L[1:N,1:N]
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
@@ -554,7 +528,7 @@ def cheb_mde_robin_etdrk4_3(W, u0, Lx, Ns, ka, kb):
     M = 32
     R = 15.
     L = (4. / Lx**2) * L[1:N,1:N]
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
@@ -599,7 +573,7 @@ def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
     M = 32
     R = 15.
     L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)
@@ -665,7 +639,7 @@ def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb):
     L[:,0] -= D[:,0] * kb
     L[:,N] -= D[:,N] * ka
     L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_ndiag(L, h, M, R)
+    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     A = h * L
     E = expm(A)

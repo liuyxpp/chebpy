@@ -10,3 +10,5 @@ chebpy.egg-info/*
 *.bak
 *.tar.gz
 *.tar.Z
+*.pdf
+
