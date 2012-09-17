@@ -199,12 +199,12 @@ def test_Ns_dirichlet():
     '''
     err_mode = 1 # 0: max(|q-q_ref|)/max(q_ref); 1: |Q - Q_ref|/|Q_ref|
     L = 10
-    N = 256
+    N = 64
     data_name = 'benchmark/Ns_DBC_N' + str(N)
     print data_name
 
     N_ref1 = N #2048
-    Ns_ref1 = 2 + 1 # 20000+1 # highest accuracy for reference. h = 1e-4
+    Ns_ref1 = 20000 + 1 # 20000+1 # highest accuracy for reference. h = 1e-4
     W1, u0, x = init_fourier(N_ref1, L)
     u0[0] = 0.; u0[-1] = 0.
     t = time()
@@ -214,7 +214,7 @@ def test_Ns_dirichlet():
     print 'OSS exact done for ' + str(t) + ' sec.'
 
     N_ref2 = N #2048
-    Ns_ref2 = 2 + 1 #20000+1 # highest accuracy for reference. h = 1e-4
+    Ns_ref2 = 20000 + 1 #20000+1 # highest accuracy for reference. h = 1e-4
     W2, u0, x = init_chebyshev(N_ref2, L)
     u0[0] = 0.; u0[-1] = 0.
     t = time()
@@ -236,6 +236,10 @@ def test_Ns_dirichlet():
     print np.abs(Q2_ref - Q1_ref)
     print np.abs(Q3_ref - Q1_ref)
     print np.abs(Q3_ref - Q2_ref)
+
+    plt.plot(x1, q1_ref, 'b')
+    plt.plot(x, q2_ref, 'g')
+    plt.plot(x3, q3_ref, 'r')
 
     #q1_ref2 = cheb_interpolation_1d(np.linspace(-1,1,N+1), q2_ref)
     #q1_ref2.shape = (N+1,)
@@ -881,7 +885,7 @@ def f(t):
 
 if __name__ == '__main__':
     #test_N_dirichlet()
-    #test_Ns_dirichlet()
+    test_Ns_dirichlet()
 
     #test_cheb_mde_dirichlet()
     #test_cheb_mde_neumann()
@@ -896,4 +900,4 @@ if __name__ == '__main__':
     #test_speed_accuracy_dirichlet()
     #test_cheb_mde_brush()
     #test_mde_eig()
-    test_etdrk4_coefficients()
+    #test_etdrk4_coefficients()

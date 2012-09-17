@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 from chebpy import cheb_D1_mat
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
-from chebpy import etdrk4_coeff_nondiag
+from chebpy import etdrk4_coeff_nondiag, etdrk4_coeff_contour_hyperbolic
 from chebpy import solve_tridiag_complex_thual
 
 __all__ = ['cheb_mde_oss',
@@ -348,23 +348,19 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
     h = ds
     M = 32
     R = 15.
-    if N > 64:
-        M = 2048
-        R = 30.
-    if N > 256:
-        M = 128
-        R = 60.
-    if N > 1024:
-        M = 256
-        R = 120.
-        
     L = np.dot(D, D) # L = D^2
     L = (4. / Lx**2) * L[1:N,1:N]
-    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
-    A = h * L
-    E = expm(A)
-    E2 = expm(A/2)
+    E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h)
+    Q = h * Q
+    f1 = h * f1
+    f2 = h * f2
+    f3 = h * f3
+    #Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+    # f2 = 2 * f2
+    #A = h * L
+    #E = expm(A)
+    #E2 = expm(A/2)
 
     for j in xrange(Ns-1):
         Nu = w * v
@@ -374,7 +370,7 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
         Nb = w * b
         c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
         Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
+        v = np.dot(E, v) + np.dot(f1, Nu) + np.dot(f2, Na+Nb) + \
             np.dot(f3, Nc)
 
     u[1:N] = v[:]

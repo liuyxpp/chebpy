@@ -97,7 +97,7 @@ def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
     return (Q, f1, f2, f3)
 
 
-def phi_contour_hyperbolic(L, h, l=0, M=32):
+def phi_contour_hyperbolic(z, l=0, M=32):
     '''
     Evaluate phi_l(h*L) using complex contour integral methods with hyperbolic contour.
 
@@ -109,11 +109,12 @@ def phi_contour_hyperbolic(L, h, l=0, M=32):
         phi_3(z) = [exp(z) - z^2/2 - z - 1] / z^3
     '''
 
-    N, N = L.shape
+    N, N = z.shape
     I = np.eye(N)
     phi = 1j * np.zeros((N,N))
 
-    theta = np.pi * (2. * np.arange(M+1) / M - 1.)
+    #theta = np.pi * (2. * np.arange(M+1) / M - 1.)
+    theta = np.pi * ((2. * np.arange(M) + 1) / M - 1.)
     u = 1.0818 * theta / np.pi
     mu = 0.5 * 4.4921 * M
     alpha = 1.1721
@@ -122,12 +123,12 @@ def phi_contour_hyperbolic(L, h, l=0, M=32):
     v = np.cos(alpha - u*1j)
 
     if l == 0:
-        c = np.exp(h*s) * v
+        c = np.exp(s) * v
     else:
-        c = np.exp(h*s) * v / (h*s)**l 
+        c = np.exp(s) * v / (s)**l 
 
-    for k in np.arange(M+1):
-        sIA = inv(s[k] * I - L)
+    for k in np.arange(M):
+        sIA = inv(s[k] * I - z)
         phi += c[k] * sIA
 
     return np.real((0.5 * 4.4921 * 1.0818 / np.pi) * phi)
@@ -147,12 +148,12 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
         * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653. 
     '''
 
-    E1 = phi_contour_hyperbolic(L, h, 0, M) # phi_0(h*L) = exp(h*L)
-    E2 = phi_contour_hyperbolic(L, h/2, 0, M) # phi_0(h/2*L)
-    Q = 0.5 * phi_contour_hyperbolic(L, h/2, 1, M)
-    phi1 = phi_contour_hyperbolic(L, h, 1, M)
-    phi2 = phi_contour_hyperbolic(L, h, 2, M)
-    phi3 = phi_contour_hyperbolic(L, h, 3, M)
+    E1 = phi_contour_hyperbolic(L*h, 0, M) # phi_0(h*L) = exp(h*L)
+    E2 = phi_contour_hyperbolic(L*h/2, 0, M) # phi_0(h/2*L)
+    Q = 0.5 * phi_contour_hyperbolic(L*h/2, 1, M)
+    phi1 = phi_contour_hyperbolic(L*h, 1, M)
+    phi2 = phi_contour_hyperbolic(L*h, 2, M)
+    phi3 = phi_contour_hyperbolic(L*h, 3, M)
     f1 = phi1 - 3 * phi2 + 4 * phi3
     f2 = 2 * (phi2 - 2 * phi3)
     f3 = 4 * phi3 - phi2
