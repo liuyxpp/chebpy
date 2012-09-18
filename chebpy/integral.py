@@ -8,8 +8,9 @@ Numerical integration on equispaced grid.
 """
 
 import numpy as np
-from scipy.linalg import inv
+from scipy.linalg import expm, expm2, expm3, inv
 from scipy.fftpack import dst
+from scipy.io import loadmat, savemat
 
 __all__ = ['complex_contour_integral',
            'etdrk4_coeff_nondiag', # complex contour integration
@@ -74,6 +75,9 @@ def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
     A = h * L
     N, N = L.shape
     I = np.eye(N)
+
+    E = expm(A)
+    E2 = expm(A/2)
     
     theta = np.linspace(.5/M, 1-.5/M, M) * np.pi
     r = R * np.exp(1j * theta)
@@ -90,11 +94,11 @@ def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
         f2 += zIAz2 * (2 + z + np.exp(z) * (z - 2))
         f3 += zIAz2 * (-4 - 3*z - z*z + np.exp(z) * (4 - z))
     f1 = (h/M) * np.real(f1)
-    f2 = (h/M) * np.real(f2)
+    f2 = 2 * (h/M) * np.real(f2)
     f3 = (h/M) * np.real(f3)
     Q = (h/M) * np.real(Q)
     
-    return (Q, f1, f2, f3)
+    return (E, E2, Q, f1, f2, f3)
 
 
 def phi_contour_hyperbolic(z, l=0, M=32):
@@ -141,6 +145,11 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
     The hyperbolic contour is suitable for evaluating the cofficients for
     diffusive PDEs, whose eigenvalues lie close to the negative real line.
 
+    Practice:
+        This seems less accurate than cicular contour plus expm(L*h) and
+        expm(L*h/2).
+        M = 32 is optimized.
+
     Ref:
         * Schmelzer, T.; Trefethen, L. N. **Evaluating Matrix Functions for
         Exponential Integrators Via Caratheodory-Fejer Approximation and Contour Integrals* 2007.
@@ -148,20 +157,22 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
         * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653. 
     '''
 
-    E1 = phi_contour_hyperbolic(L*h, 0, M) # phi_0(h*L) = exp(h*L)
-    E2 = phi_contour_hyperbolic(L*h/2, 0, M) # phi_0(h/2*L)
-    Q = 0.5 * phi_contour_hyperbolic(L*h/2, 1, M)
+    #E1 = phi_contour_hyperbolic(L*h, 0, M) # phi_0(h*L) = exp(h*L)
+    E1 = expm(h*L)
+    #E2 = phi_contour_hyperbolic(L*h/2, 0, M) # phi_0(h/2*L)
+    E2 = expm(h/2*L)
+    Q = h * 0.5 * phi_contour_hyperbolic(L*h/2, 1, M)
     phi1 = phi_contour_hyperbolic(L*h, 1, M)
     phi2 = phi_contour_hyperbolic(L*h, 2, M)
     phi3 = phi_contour_hyperbolic(L*h, 3, M)
-    f1 = phi1 - 3 * phi2 + 4 * phi3
-    f2 = 2 * (phi2 - 2 * phi3)
-    f3 = 4 * phi3 - phi2
+    f1 = h* (phi1 - 3 * phi2 + 4 * phi3)
+    f2 = h * 2 * (phi2 - 2 * phi3)
+    f3 = h* (4 * phi3 - phi2)
     
     return E1, E2, Q, f1, f2, f3
 
 
-def etdrk4_coeff_scale_square(z, k, d=7):
+def etdrk4_coeff_scale_square(L, h, d=7):
     '''
     Evaluate etdrk4 coefficients by scaling and squaring methods. 
 
@@ -170,7 +181,20 @@ def etdrk4_coeff_scale_square(z, k, d=7):
         **EXPINT - A Matlab Package for Exponential Integrators**
         ACM Math. Soft. 2007, 33, Article 4.
     '''
-    pass
+    Ns = int(1/h)
+    data_name = 'benchmark/scale_square_data/etdrk4_phi_N256_Ns' + str(Ns-1) + '.mat'
+    phimat = loadmat(data_name)
+    E1 = phimat['ez']
+    E2 = phimat['ez2']
+    Q = h * 0.5 * phimat['phi_12']
+    phi1 = phimat['phi_1']
+    phi2 = phimat['phi_2']
+    phi3 = phimat['phi_3']
+    f1 = h * (phi1 - 3 * phi2 + 4 * phi3)
+    f2 = h * 2 * (phi2 - 2 * phi3)
+    f3 = h * (4 * phi3 - phi2)
+    
+    return E1, E2, Q, f1, f2, f3
 
 
 def complex_contour_integral(f, z, M=32, R=1.0):

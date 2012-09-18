@@ -15,9 +15,10 @@ from scipy.fftpack import dst, idst, dct, idct
 import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
-from chebpy import cheb_D1_mat
+from chebpy import cheb_D1_mat, cheb_D2_mat_dirichlet_dirichlet
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
 from chebpy import etdrk4_coeff_nondiag, etdrk4_coeff_contour_hyperbolic
+from chebpy import etdrk4_coeff_scale_square
 from chebpy import solve_tridiag_complex_thual
 
 __all__ = ['cheb_mde_oss',
@@ -313,7 +314,7 @@ def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
     return cheb_mde_oscheb(W, u0, Lx, Ns, nbce, nbco)
 
 
-def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
+def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0):
     '''
     Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
     This method allows very large time step.
@@ -336,7 +337,7 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
 
     ds = 1. / (Ns-1)
     N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
+    #D, xx = cheb_D1_mat(N)
     #u = np.ones((N+1,1))
     u = u0.copy()
     u.shape = (N+1, 1)
@@ -346,21 +347,20 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
     w.shape = (N-1, 1)
 
     h = ds
+    #L = np.dot(D, D) # L = D^2
+    D1t, L, x = cheb_D2_mat_dirichlet_dirichlet(N)
+    L = (4. / Lx**2) * L
+
     M = 32
     R = 15.
-    L = np.dot(D, D) # L = D^2
-    L = (4. / Lx**2) * L[1:N,1:N]
-
-    E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h)
-    Q = h * Q
-    f1 = h * f1
-    f2 = h * f2
-    f3 = h * f3
-    #Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
-    # f2 = 2 * f2
-    #A = h * L
-    #E = expm(A)
-    #E2 = expm(A/2)
+    if algo == 0:
+        E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+    elif algo == 1:
+        E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
+    elif algo == 2:
+        E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
+    else:
+        E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
     for j in xrange(Ns-1):
         Nu = w * v
@@ -374,7 +374,7 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns):
             np.dot(f3, Nc)
 
     u[1:N] = v[:]
-    return (u, .5*(xx+1.)*Lx)
+    return (u, .5*(x+1.)*Lx)
 
 
 def cheb_mde_neumann_etdrk4(W, u0, Lx, Ns):
