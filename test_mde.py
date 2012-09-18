@@ -66,46 +66,106 @@ def init_chebyshev(N, L):
 
 def test_cheb_mde_dirichlet():
     L = 10
-    Ns = 20000 + 1
+    Ns = 200 + 1
 
-    N = 4096
+    print 'test_cheb_mde_dirichlet'
+
+    N = 32
     W, u0, x = init_fourier(N, L)
     u0[0] = 0.; u0[N] = 0.;
+    print 'OSS N = ', N, ' Ns= ', Ns-1
     #plt.plot(x, W)
     #plt.axis([0, 10, -1.1, 1.1])
     #plt.show()
     q1, x1 = cheb_mde_oss(W, u0, L, Ns)
     Q1 = L * oss_integral_weights(q1)
-    savemat('benchmark/exact/OSS.mat',{
-            'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
-            'x':x, 'q':q1, 'Q':Q1})
 
-    N = 2048
-    W, u0, x = init_chebyshev(N, L)
+    N = 32
+    W, u0, x2 = init_chebyshev(N, L)
     u0[0] = 0; u0[N] = 0;
+    print 'OSCHEB N = ', N, ' Ns= ', Ns-1
     #plt.plot(x, W)
     #plt.axis([0, 10, -1.1, 1.1,])
     #plt.show()
     q2 = cheb_mde_dirichlet_oscheb(W, u0, L, Ns)
     Q2 = 0.5 * L * cheb_quadrature_clencurt(q2)
-    savemat('benchmark/exact/OSCHEB.mat',{
-            'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
-            'x':x, 'q':q2, 'Q':Q2})
 
-    N = 128
-    Ns = 100000
-    q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns)
+    N = 32
+    Ns = 200 + 1
+    algo = 1
+    scheme = 1
+    W, u0, x = init_chebyshev(N, L)
+    u0[0] = 0; u0[N] = 0;
+    print 'ETDRK4 N = ', N, ' Ns= ', Ns-1
+    q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns, algo, scheme)
     Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
-    savemat('benchmark/exact/ETDRK4.mat',{
-            'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
-            'x':x, 'q':q3, 'Q':Q3})
 
-
-    #plt.plot(x1, q1, 'b')
-    plt.plot(x, q2, 'g')
-    plt.plot(x, q3, 'r')
+    plt.plot(x1, q1, 'b')
+    plt.plot(x2, q2, 'g')
+    plt.plot(x3, q3, 'r')
     plt.axis([0, 10, 0, 1.15])
     plt.show()
+
+
+def test_exact_dirichlet(oss=0,oscheb=0,etdrk4=0):
+    L = 10
+
+    if oss:
+        print 'test_cheb_mde_dirichlet'
+        N = 16384
+        Ns = 1000000 + 1
+        W, u0, x = init_fourier(N, L)
+        u0[0] = 0.; u0[N] = 0.;
+        print 'OSS N = ', N, ' Ns = ', Ns-1
+        #plt.plot(x, W)
+        #plt.axis([0, 10, -1.1, 1.1])
+        #plt.show()
+        q1, x1 = cheb_mde_oss(W, u0, L, Ns)
+        Q1 = L * oss_integral_weights(q1)
+        data_name = 'benchmark/exact/OSS_N' + str(N) + '_Ns' + str(Ns-1)
+        savemat(data_name,{
+                'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
+                'x':x, 'q':q1, 'Q':Q1})
+        plt.plot(x1, q1, 'b')
+        plt.axis([0, 10, 0, 1.15])
+        plt.show()
+
+    if oscheb:
+        N = 8192
+        Ns = 200000 + 1
+        W, u0, x = init_chebyshev(N, L)
+        u0[0] = 0; u0[N] = 0;
+        print 'OSCHEB N = ', N, ' Ns = ', Ns-1
+        #plt.plot(x, W)
+        #plt.axis([0, 10, -1.1, 1.1,])
+        #plt.show()
+        q2 = cheb_mde_dirichlet_oscheb(W, u0, L, Ns)
+        Q2 = 0.5 * L * cheb_quadrature_clencurt(q2)
+        data_name = 'benchmark/exact/OSCHEB_N' + str(N) + '_Ns' + str(Ns-1)
+        savemat(data_name,{
+                'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
+                'x':x, 'q':q2, 'Q':Q2})
+        plt.plot(x, q2, 'g')
+        plt.axis([0, 10, 0, 1.15])
+        plt.show()
+
+    if etdrk4:
+        N = 256
+        Ns = 1000000 + 1
+        algo = 1
+        scheme = 1
+        W, u0, x = init_chebyshev(N, L)
+        u0[0] = 0; u0[N] = 0;
+        print 'ETDRK4 N = ', N, ' Ns = ', Ns-1
+        q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns, algo, scheme)
+        Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
+        data_name = 'benchmark/exact/ETDRK4_N' + str(N) + '_Ns' + str(Ns-1)
+        savemat(data_name,{
+                'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
+                'x':x, 'q':q3, 'Q':Q3})
+        plt.plot(x3, q3, 'r')
+        plt.axis([0, 10, 0, 1.15])
+        plt.show()
 
 
 def test_cheb_mde_neumann():
@@ -215,52 +275,38 @@ def test_Ns_dirichlet():
     '''
     L = 10
     N = 512
+    Ns1 = 20000 + 1
+    Ns2 = Ns1
+    Ns3 = 20000 + 1
     algo3 = 1 # 0: circular, 1: hyperbolic, 2: scaling and squaring
+    scheme = 1
     data_name = 'benchmark/Ns_DBC_N' + str(N)
     print data_name
 
-    N_ref1 = N #2048
-    Ns_ref1 = 2 + 1 # 20000+1 # highest accuracy for reference. h = 1e-4
-    W1, u0, x = init_fourier(N_ref1, L)
-    u0[0] = 0.; u0[-1] = 0.
-    t = time()
-    q1_ref, x1 = cheb_mde_oss(W1, u0, L, Ns_ref1)
-    t = time() - t
-    Q1_ref = L * oss_integral_weights(q1_ref)
-    print 'OSS exact done for ' + str(t) + ' sec.'
+    oss_ref = 'benchmark/exact/OSS.mat'
+    mat = loadmat(oss_ref)
+    q1_ref = mat['q']
+    Q1_ref = mat['Q']
+    N1_ref = mat['N']
+    Ns1_ref = mat['Ns']
 
-    N_ref2 = N #2048
-    Ns_ref2 = 2 + 1 #20000+1 # highest accuracy for reference. h = 1e-4
-    W2, u0, x = init_chebyshev(N_ref2, L)
-    u0[0] = 0.; u0[-1] = 0.
-    t = time()
-    q2_ref = cheb_mde_dirichlet_oscheb(W2, u0, L, Ns_ref2)
-    t = time() - t
-    Q2_ref = 0.5 * L * cheb_quadrature_clencurt(q2_ref)
-    print 'OSCHEB exact done for ' + str(t) + ' sec.'
+    oscheb_ref = 'benchmark/exact/OSCHEB.mat'
+    mat = loadmat(oscheb_ref)
+    q2_ref = mat['q']
+    Q2_ref = mat['Q']
+    N2_ref = mat['N']
+    Ns2_ref = mat['Ns']
 
-    N_ref3 = N #512
-    Ns_ref3 = 20000+1 # highest accuracy for reference. h = 1e-4
-    W3, u0, x = init_chebyshev(N_ref3, L)
-    u0[0] = 0.; u0[-1] = 0.
-    t = time()
-    q3_ref, x3 = cheb_mde_dirichlet_etdrk4(W3, u0, L, Ns_ref3, algo3)
-    Q3_ref = 0.5 * L * cheb_quadrature_clencurt(q3_ref)
-    t = time() - t
-    print 'ETDRK4 exact done for ' + str(t) + ' sec.'
-    print np.sum(np.abs(q3_ref.reshape(q3_ref.size)-q2_ref)) / q3_ref.size
-    print np.abs(Q2_ref - Q1_ref)
-    print np.abs(Q3_ref - Q1_ref)
-    print np.abs(Q3_ref - Q2_ref)
+    etdrk4_ref = 'benchmark/exact/ETDRK4.mat'
+    mat = loadmat(etdrk4_ref)
+    q3_ref = mat['q']
+    Q3_ref = mat['Q']
+    N3_ref = mat['N']
+    Ns3_ref = mat['Ns']
 
-    #plt.plot(x1, q1_ref, 'b')
-    #plt.plot(x, q2_ref, 'g')
-    #plt.plot(x3, q3_ref, 'r')
-
-    #q1_ref2 = cheb_interpolation_1d(np.linspace(-1,1,N+1), q2_ref)
-    #q1_ref2.shape = (N+1,)
-    #print np.max(np.abs(q1_ref2 - q1_ref)) / np.max(q1_ref)
-    #print np.linalg.norm(q1_ref2 - q1_ref) / N
+    mode = 0 # error mode 0: Q only, 1: q and Q
+    if N1_ref == N and N2_ref.size == N and N3_ref.size == N:
+        mode = 1
 
     # Ns = 10^t
     errs0_1 = []
@@ -273,7 +319,7 @@ def test_Ns_dirichlet():
     W1, u0, x = init_fourier(N, L)
     W2, u0, x = init_chebyshev(N, L)
     u0[0] = 0.; u0[-1] = 0.
-    ns_max = int(np.log10((Ns_ref1-1)/2)) # Ns_max = 10^{ns_max}
+    ns_max = int(np.log10((Ns1-1)/2)) # Ns_max = 10^{ns_max}
     for Ns in np.round(np.power(10, np.linspace(0,ns_max,10))):
         Ns = int(Ns) + 1
 
@@ -283,11 +329,11 @@ def test_Ns_dirichlet():
         Q2 = 0.5 * L * cheb_quadrature_clencurt(q2)
         Qs1.append(Q1)
         Qs2.append(Q2)
-
-        err1 = np.max(np.abs(q1 - q1_ref)) / np.max(q1_ref)
-        err2 = np.max(np.abs(q2 - q2_ref)) / np.max(q2_ref)
-        errs0_1.append(err1)
-        errs0_2.append(err2)
+        if mode:
+            err1 = np.max(np.abs(q1 - q1_ref)) / np.max(q1_ref)
+            err2 = np.max(np.abs(q2 - q2_ref)) / np.max(q2_ref)
+            errs0_1.append(err1)
+            errs0_2.append(err2)
         err1 = np.abs(Q1 - Q1_ref) / np.abs(Q1_ref)
         err2 = np.abs(Q2 - Q2_ref) / np.abs(Q2_ref)
         errs1_1.append(err1)
@@ -301,25 +347,25 @@ def test_Ns_dirichlet():
     Nss3 = []
     W3, u0, x = init_chebyshev(N, L)
     u0[0] = 0.; u0[-1] = 0.
-    ns_max = int(np.log10((Ns_ref3-1)/2)) # Ns_max = 10^{ns_max}
+    ns_max = int(np.log10((Ns3-1)/2)) # Ns_max = 10^{ns_max}
     for Ns in np.round(np.power(10, np.linspace(0,4,10))):
         Ns = int(Ns) + 1
 
-        q3, x3 = cheb_mde_dirichlet_etdrk4(W3, u0, L, Ns, algo3)
+        q3, x3 = cheb_mde_dirichlet_etdrk4(W3, u0, L, Ns, algo3, scheme)
         Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
         Qs3.append(Q3)
-
-        err3 = np.max(np.abs(q3 - q3_ref)) / np.max(q3_ref)
-        errs0_3.append(err3)
+        if mode:
+            err3 = np.max(np.abs(q3 - q3_ref)) / np.max(q3_ref)
+            errs0_3.append(err3)
         err3 = np.abs(Q3 - Q3_ref) / np.abs(Q3_ref)
         errs1_3.append(err3)
         Nss3.append(1./(Ns-1))
         print Ns-1, '\t', err3
 
-    savemat(data_name, {'Ns_ref1':Ns_ref1, 'Ns_ref2':Ns_ref2,
-                        'Ns_ref3':Ns_ref3, 'N':N,
-                        'N_ref1':N_ref1, 'N_ref2':N_ref2,
-                        'N_ref3':N_ref3, 'Algorithm1':'OSS',
+    savemat(data_name, {'N_ref1':N1_ref, 'N_ref2':N2_ref,
+                        'N_ref3':N3_ref, 'N':N,
+                        'Ns1_ref':Ns1_ref, 'Ns2_ref':Ns2_ref,
+                        'Ns3_ref':Ns3_ref, 'Algorithm1':'OSS',
                         'Algorithm2':'OSCHEB', 'Algorithm3':'ETDRK4',
                         'Q1_ref':Q1_ref, 'Q2_ref':Q2_ref, 'Q3_ref':Q3_ref,
                         'Q1':Qs1, 'Q2':Qs2, 'Q3':Qs3,
@@ -330,17 +376,18 @@ def test_Ns_dirichlet():
                         'Ns0_3':Nss3, 'err0_3':errs0_3,
                         'Ns1_3':Nss3, 'err1_3':errs1_3})
 
-    plt.plot(Nss1, errs0_1, 'bo-', mew=0, label='OSS')
-    plt.plot(Nss1, errs0_2, 'go-', mew=0, label='OSCHEB')
-    plt.plot(Nss3, errs0_3, 'ro-', mew=0, label='ETDRK4')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel('$\Delta s$')
-    plt.ylabel('Relative Error at s=1')
-    handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles, labels, loc='lower right')
-    plt.grid('on')
-    plt.show()
+    if mode:
+        plt.plot(Nss1, errs0_1, 'bo-', mew=0, label='OSS')
+        plt.plot(Nss1, errs0_2, 'go-', mew=0, label='OSCHEB')
+        plt.plot(Nss3, errs0_3, 'ro-', mew=0, label='ETDRK4')
+        plt.xscale('log')
+        plt.yscale('log')
+        plt.xlabel('$\Delta s$')
+        plt.ylabel('Relative Error at s=1')
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles, labels, loc='lower right')
+        plt.grid('on')
+        plt.show()
 
     plt.plot(Nss1, errs1_1, 'bo-', mew=0, label='OSS')
     plt.plot(Nss1, errs1_2, 'go-', mew=0, label='OSCHEB')
@@ -363,47 +410,46 @@ def test_N_dirichlet():
     '''
     err_mode = 1 # 0: max(|q-q_ref|)/max(q_ref); 1: |Q - Q_ref|/|Q_ref|
     L = 10
-    Ns1 = 1 + 1
-    Ns3 = 10000 + 1
+    N1 = 512
+    N2 = N1
+    N3 = 512
+    Ns1 = 20000 + 1
+    Ns2 = Ns1
+    Ns3 = 20000 + 1
+    algo3 = 1
+    scheme = 1
     data_name = 'benchmark/N_DBC_Ns'+str(Ns1-1)+'_Ns'+str(Ns3-1)
     print data_name
 
-    N_ref1 = 8192
-    Ns_ref1 = Ns1 # highest accuracy for reference. h = 1e-4
-    W, u0, x = init_fourier(N_ref1, L)
-    u0[0] = 0.; u0[-1] = 0.
-    q1_ref, x1 = cheb_mde_oss(W, u0, L, Ns_ref1)
-    Q1_ref = L * oss_integral_weights(q1_ref)
-    print 'OSS exact done'
+    oss_ref = 'benchmark/exact/OSS.mat'
+    mat = loadmat(oss_ref)
+    q1_ref = mat['q']
+    Q1_ref = mat['Q']
+    N1_ref = mat['N']
+    Ns1_ref = mat['Ns']
 
-    N_ref2 = 8192
-    Ns_ref2 = Ns1 # highest accuracy for reference. h = 1e-4
-    W, u0, x = init_chebyshev(N_ref2, L)
-    u0[0] = 0.; u0[-1] = 0.
-    q2_ref = cheb_mde_dirichlet_oscheb(W, u0, L, Ns_ref2)
-    Q2_ref = 0.5 * L * cheb_quadrature_clencurt(q2_ref)
-    print 'OSCHEB exact done'
+    oscheb_ref = 'benchmark/exact/OSCHEB.mat'
+    mat = loadmat(oscheb_ref)
+    q2_ref = mat['q']
+    Q2_ref = mat['Q']
+    N2_ref = mat['N']
+    Ns2_ref = mat['Ns']
 
-    N_ref3 = 2048
-    Ns_ref3 = Ns3 # highest accuracy for reference. h = 1e-4
-    W, u0, x = init_chebyshev(N_ref3, L)
-    u0[0] = 0.; u0[-1] = 0.
-    t = time()
-    q3_ref, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns_ref3)
-    Q3_ref = 0.5 * L * cheb_quadrature_clencurt(q3_ref)
-    t = time() - t
-    print 'ETDRK4 exact done for ' + str(t) + ' sec.'
-
-    print np.abs(Q2_ref - Q1_ref)
-    print np.abs(Q3_ref - Q1_ref)
-    print np.abs(Q3_ref - Q2_ref)
+    etdrk4_ref = 'benchmark/exact/ETDRK4.mat'
+    mat = loadmat(etdrk4_ref)
+    q3_ref = mat['q']
+    Q3_ref = mat['Q']
+    N3_ref = mat['N']
+    Ns3_ref = mat['Ns']
 
     # For OSS and OSCHEB
     errs1 = []
     errs2 = []
+    Qs1 = []
+    Qs2 = []
     NN1 = []
-    n_max = int(np.log2(N_ref1)) # N_max = 2^{n_max - 1}
-    for N in np.round(np.power(2, np.arange(4,n_max))):
+    n_max = int(np.log2(N1)) # N_max = 2^{n_max - 1}
+    for N in np.round(np.power(2, np.linspace(4,n_max,10))):
         N = int(N)
 
         W, u0, x = init_fourier(N, L)
@@ -413,48 +459,53 @@ def test_N_dirichlet():
 
         W, u0, x = init_chebyshev(N, L)
         u0[0] = 0.; u0[-1] = 0.
-        q2 = cheb_mde_dirichlet_oscheb(W, u0, L, Ns1)
+        q2 = cheb_mde_dirichlet_oscheb(W, u0, L, Ns2)
         Q2 = 0.5 * L * cheb_quadrature_clencurt(q2)
 
-        if err_mode == 0:
-            err1 = np.max(np.abs(q1 - q1_ref)) / np.max(q1_ref)
-            err2 = np.max(np.abs(q2 - q2_ref)) / np.max(q2_ref)
-        else:
-            err1 = np.abs(Q1 - Q1_ref) / np.abs(Q1_ref)
-            err2 = np.abs(Q2 - Q2_ref) / np.abs(Q2_ref)
+        err1 = np.abs(Q1 - Q1_ref) / np.abs(Q1_ref)
+        err2 = np.abs(Q2 - Q2_ref) / np.abs(Q2_ref)
         NN1.append(N)
+        Qs1.append(Q1)
+        Qs2.append(Q2)
         errs1.append(err1)
         errs2.append(err2)
         print N, '\t', err1, '\t', err2
 
     # For ETDRK4
     errs3 = []
+    Qs3 = []
     NN3 = []
-    n_max = int(np.log2(N_ref3)) # N_max = 2^{n_max - 1}
-    for N in np.round(np.power(2, np.arange(4,n_max))):
+    n_max = int(np.log2(N3)) # N_max = 2^{n_max - 1}
+    for N in np.round(np.power(2, np.linspace(4,n_max,10))):
         N = int(N)
 
         W, u0, x = init_chebyshev(N, L)
         u0[0] = 0.; u0[-1] = 0.
-        q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns3)
+        q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns3, algo3, scheme)
         Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
 
-        if err_mode == 0:
-            err3 = np.max(np.abs(q3 - q3_ref)) / np.max(q3_ref)
-        else:
-            err3 = np.abs(Q3 - Q3_ref) / np.abs(Q3_ref)
+        err3 = np.abs(Q3 - Q3_ref) / np.abs(Q3_ref)
         NN3.append(N)
+        Qs3.append(Q3)
         errs3.append(err3)
         print N, '\t', err3
 
-    savemat(data_name, {'N1':NN1,'err1':errs1,
-                                   'N2':NN1,'err2':errs2,
-                                   'N3':NN3,'err3':errs3})
+    savemat(data_name, {'N_ref1':N1_ref, 'N_ref2':N2_ref,
+                        'N_ref3':N3_ref, 'Ns1':Ns1-1,
+                        'Ns2':Ns2-1, 'Ns3':Ns3-1,
+                        'Ns1_ref':Ns1_ref, 'Ns2_ref':Ns2_ref,
+                        'Ns3_ref':Ns3_ref, 'Algorithm1':'OSS',
+                        'Algorithm2':'OSCHEB', 'Algorithm3':'ETDRK4',
+                        'Q1_ref':Q1_ref, 'Q2_ref':Q2_ref, 'Q3_ref':Q3_ref,
+                        'Q1':Qs1, 'Q2':Qs2, 'Q3':Qs3,
+                        'N1':NN1, 'err1':errs1,
+                        'N2':NN1, 'err2':errs2,
+                        'N3':NN3, 'err3':errs3})
 
     plt.plot(NN1, errs1, 'bo-', mew=0, label='OSS')
     plt.plot(NN1, errs2, 'go-', mew=0, label='OSCHEB')
     plt.plot(NN3, errs3, 'ro-', mew=0, label='ETDRK4')
-    plt.xscale('log')
+    #plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('$N_z$')
     plt.ylabel('Relative Error at s=1')
@@ -929,8 +980,9 @@ def f(t):
 if __name__ == '__main__':
     #test_N_dirichlet()
     #test_Ns_dirichlet()
+    test_exact_dirichlet(0,0,1)
 
-    test_cheb_mde_dirichlet()
+    #test_cheb_mde_dirichlet()
     #test_cheb_mde_neumann()
     #test_cheb_mde_robin()
     #test_cheb_mde_mixed()

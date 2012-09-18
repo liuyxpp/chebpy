@@ -19,6 +19,10 @@ from chebpy import cheb_D1_mat, cheb_D2_mat_dirichlet_dirichlet
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
 from chebpy import etdrk4_coeff_nondiag, etdrk4_coeff_contour_hyperbolic
 from chebpy import etdrk4_coeff_scale_square
+from chebpy import etdrk4_scheme_coxmatthews, etdrk4_scheme_krogstad
+from chebpy import etdrk4_coeff_nondiag_krogstad
+from chebpy import etdrk4_coeff_contour_hyperbolic_krogstad
+from chebpy import etdrk4_coeff_scale_square_krogstad
 from chebpy import solve_tridiag_complex_thual
 
 __all__ = ['cheb_mde_oss',
@@ -314,7 +318,7 @@ def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
     return cheb_mde_oscheb(W, u0, Lx, Ns, nbce, nbco)
 
 
-def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0):
+def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0, scheme=0):
     '''
     Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
     This method allows very large time step.
@@ -353,25 +357,29 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0):
 
     M = 32
     R = 15.
-    if algo == 0:
-        E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
-    elif algo == 1:
-        E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
-    elif algo == 2:
-        E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
+    
+    if scheme == 0:
+        if algo == 0:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+        elif algo == 1:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
+        elif algo == 2:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
+        else:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+        v = etdrk4_scheme_coxmatthews(Ns, w, v, E, E2, Q, f1, f2, f3)
+    elif scheme == 1:
+        if algo == 0:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
+        elif algo == 1:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_contour_hyperbolic_krogstad(L, h, M)
+        elif algo == 2:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_scale_square_krogstad(L, h)
+        else:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
+        v = etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6)
     else:
-        E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
-
-    for j in xrange(Ns-1):
-        Nu = w * v
-        a = np.dot(E2, v) + np.dot(Q, Nu)
-        Na = w * a
-        b = np.dot(E2, v) + np.dot(Q, Na)
-        Nb = w * b
-        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
-        Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + np.dot(f2, Na+Nb) + \
-            np.dot(f3, Nc)
+        raise ValueError('No such ETDRK4 scheme!')
 
     u[1:N] = v[:]
     return (u, .5*(x+1.)*Lx)

@@ -21,6 +21,7 @@ __version__ = "0.1"
 
 from .misc import *
 from .tridiag import *
+from .etdrk4 import * # ETDRK4 schemes and coefficients
 from .cheb import * # Chebyshev polynomials
 from .chebt import * # Chebyshev transform
 from .chebi import * # Chebyshev interpolations
