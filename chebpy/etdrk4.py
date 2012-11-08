@@ -12,7 +12,13 @@ from scipy.linalg import expm, expm2, expm3, inv
 from scipy.fftpack import dst
 from scipy.io import loadmat, savemat
 
-__all__ = ['etdrk4_coeff_nondiag', # complex contour integration
+from chebpy import DIRICHLET, NEUMANN, ROBIN
+from chebpy import cheb_D2_mat_dirichlet_dirichlet, cheb_D2_mat_robin_robin
+from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_dirichlet
+
+__all__ = ['BC', # class for boundary condition
+           'ETDRK4', # ETDRK4 class
+           'etdrk4_coeff_nondiag', # complex contour integration
            'phi_contour_hyperbolic',
            'etdrk4_coeff_contour_hyperbolic',
            'etdrk4_coeff_scale_square', # scale and square
@@ -22,6 +28,189 @@ __all__ = ['etdrk4_coeff_nondiag', # complex contour integration
            'etdrk4_coeff_contour_hyperbolic_krogstad',
            'etdrk4_coeff_scale_square_krogstad',
           ]
+
+class BC(object):
+    def __init__(self, kind=None, vc=None):
+        '''
+        The boundary condition can be generally written as:
+            alpha * du/dx + beta * u = gamma
+        It is convenient to specified BC by a 3-element vector:
+            (alpha, beta, gamma)
+        :param:kind: kind of boundary conditions.
+        :param:vc: boundary condition specified by a vec with 3 elements.
+        '''
+        if vc is not None and len(vc) != 3:
+            raise ValueError('The vector to specify boundary condtion'
+                             'must has 3 elements!')
+        if kind == ROBIN and vc is None:
+            raise ValueError('Robin BC needs a coefficient vector.')
+            
+        self.kind = kind
+        if kind is None:
+            if vc is None:
+                self.kind = DIRICHLET
+            else:
+                self.kind = ROBIN
+
+        if self.kind == DIRICHLET:
+            self.alpha = 0
+            self.beta = 1.
+            self.gamma = 0
+        elif self.kind == NEUMANN:
+            self.alpha = 1.
+            self.beta = 0
+            self.gamma = 0
+        elif kind == ROBIN:
+            self.alpha = vc[0]
+            self.beta = vc[1]
+            self.gamma = vc[2]
+        else:
+            raise ValueError('kind ' + str(kind) + ' is not supported.')
+
+
+class ETDRK4(object):
+    def __init__(self, Lx, N, Ns, h=None, 
+                 lbc=BC(), rbc=BC(), algo=1, scheme=1):
+        '''
+        The defaut left BC and right BC are DBCs.
+
+        :param:Lx: physical size of the 1D spacial grid.
+        :param:Ns: number of grid points in time.
+        :param:lbc: left boundary condition.
+        :type:lbc: class BC
+        :param:rbc: right boundary condition.
+        :type:rbc: class BC
+        :param:h: time step.
+        :param:save_all: is save all solutions for each time step?
+        :param:algo: algorithm for calculation of RK4 coefficients.
+        :param:scheme: RK4 scheme.
+        '''
+        self.Lx = Lx
+        self.N = N
+        self.Ns = Ns
+        self.lbc = lbc
+        self.rbc = rbc
+        if h is None:
+            self.h = 1. / (Ns - 1)
+        else:
+            self.h = h
+        self.algo = algo
+        self.scheme = scheme
+        
+        self.update()
+
+    def update(self):
+        self._calc_operator()
+        self._calc_RK4_coeff()
+
+    def _calc_operator(self):
+        if self.lbc.kind == DIRICHLET:
+            if self.rbc.kind == DIRICHLET:
+                D1, L, x = cheb_D2_mat_dirichlet_dirichlet(self.N)
+            else:
+                D1, L, x = cheb_D2_mat_dirichlet_robin(self.N, 
+                                                       self.rbc.beta)
+        else:
+            if self.rbc.kind == DIRICHLET:
+                D1, L, x = cheb_D2_mat_robin_dirichlet(self.N, 
+                                                       self.lbc.beta)
+            else:
+                D1, L, x = cheb_D2_mat_robin_robin(self.N, 
+                                                   self.lbc.beta,
+                                                   self.rbc.beta)
+
+        self.x = .5 * (x + 1) * self.Lx
+        self.L = (4. / self.Lx**2) * L
+
+    def _calc_RK4_coeff(self):
+        M = 32; R = 15.;
+        if self.scheme == 0:
+            if self.algo == 0:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_nondiag(self.L, self.h, M, R)
+            elif self.algo == 1:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_contour_hyperbolic(self.L, self.h, M)
+            elif self.algo == 2:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_scale_square(self.L, self.h)
+            else:
+                raise ValueError('No such ETDRK4 coefficient algorithm!')
+            f4 = None; f5 = None; f6 = None
+        elif self.scheme == 1:
+            if self.algo == 0:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_nondiag_krogstad(self.L, self.h, M, R)
+            elif self.algo == 1:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_contour_hyperbolic_krogstad(self.L, self.h, M)
+            elif self.algo == 2:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_scale_square_krogstad(self.L, self.h)
+            else:
+                raise ValueError('No such ETDRK4 coefficient algorithm!')
+            Q = None
+        else:
+            raise ValueError('No such ETDRK4 scheme!')
+
+        self.E = E
+        self.E2 = E2
+        self.Q = Q
+        self.f1 = f1
+        self.f2 = f2
+        self.f3 = f3
+        self.f4 = f4
+        self.f5 = f5
+        self.f6 = f6
+
+    def solve(self, w, u0, q=None):
+        '''
+            dq/dt = Dq + Wq = Dq - wq
+        '''
+        u = u0.copy()
+        if self.lbc.kind == DIRICHLET:
+            if self.rbc.kind == DIRICHLET:
+                v = u[1:-1]
+                W = -w[1:-1]
+            else:
+                v = u[:-1]
+                W = -w[:-1]
+        else:
+            if self.rbc.kind == DIRICHLET:
+                v = u[1:]
+                W = -w[1:]
+            else:
+                v = u
+                W = -w
+        E = self.E
+        E2 = self.E2
+        Q = self.Q
+        f1 = self.f1
+        f2 = self.f2
+        f3 = self.f3
+        f4 = self.f4
+        f5 = self.f5
+        f6 = self.f6
+        if self.scheme == 0:
+            v = etdrk4_scheme_coxmatthews(
+                    self.Ns, W, v, E, E2, Q, f1, f2, f3)
+        else:
+            v = etdrk4_scheme_krogstad(
+                    self.Ns, W, v, E, E2, f1, f2, f3, f4, f5, f6, q)
+
+        if self.lbc.kind == DIRICHLET:
+            if self.rbc.kind == DIRICHLET:
+                u[1:-1] = v
+            else:
+                u[:-1] = v
+        else:
+            if self.rbc.kind == DIRICHLET:
+                u[1:] = v
+            else:
+                u = v
+
+        return (u, self.x)
+
 
 def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
     '''
@@ -204,7 +393,7 @@ def etdrk4_scheme_coxmatthews(Ns, w, v, E, E2, Q, f1, f2, f3):
     return v
 
 
-def etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6):
+def etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6, q=None):
     '''
     Krogstad ETDRK4, whose stiff order is 3 better than Cox-Matthews ETDRK4.
     '''
@@ -218,5 +407,8 @@ def etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6):
         c = np.dot(E, v) + np.dot(f3, Nu) + np.dot(f4, Nb-Nu)
         Nc = w * c
         v = c + np.dot(f4, Na) + np.dot(f5, Nu+Nc) + np.dot(f6, Na+Nb)
+        if q is not None:
+            q[j+1] = v[:,0]
 
     return v
+

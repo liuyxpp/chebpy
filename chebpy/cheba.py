@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from chebpy import cheb_fast_transform, cheb_inverse_fast_transform
 from chebpy import cheb_D1_mat, cheb_D2_mat_dirichlet_dirichlet
+from chebpy import cheb_D2_mat_robin_dirichlet
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_robin
 from chebpy import etdrk4_coeff_nondiag, etdrk4_coeff_contour_hyperbolic
 from chebpy import etdrk4_coeff_scale_square
@@ -32,6 +33,12 @@ __all__ = ['cheb_mde_oss',
            'cheb_mde_neumann_oscheb',
            'cheb_mde_dirichlet_etdrk4',
            'cheb_mde_neumann_etdrk4',
+           'cheb_mde_neumann_dirichlet_etdrk4',
+           'cheb_mde_dirichlet_neumann_etdrk4',
+           'cheb_mde_robin_dirichlet_etdrk4',
+           'cheb_mde_dirichlet_robin_etdrk4',
+           'cheb_mde_robin_neumann_etdrk4',
+           'cheb_mde_neumann_robin_etdrk4',
            'cheb_mde_robin_etdrk4',
            'cheb_mde_robin_etdrk4_1',
            'cheb_mde_robin_etdrk4_2',
@@ -318,14 +325,52 @@ def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
     return cheb_mde_oscheb(W, u0, Lx, Ns, nbce, nbco)
 
 
-def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0, scheme=0):
+def cheb_mde_core_etdrk4(w, v, L, Ns, h, q=None, algo=1, scheme=1):
     '''
-    Solution of modified diffusion equation (MDE) by ETDRK4 shceme.
+    The core of ETDRK4 methods.
+    It contains the generation of ETDRK4 coefficients and carrying out
+    ETDRK4 schemes.
+    '''
+
+    #Ns = int(round(1./h)) + 1
+    M = 32
+    R = 15.
+    if scheme == 0:
+        if algo == 0:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+        elif algo == 1:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
+        elif algo == 2:
+            E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
+        else:
+            raise ValueError('No such ETDRK4 coefficient algorithm!')
+        v = etdrk4_scheme_coxmatthews(Ns, w, v, E, E2, Q, f1, f2, f3)
+    elif scheme == 1:
+        if algo == 0:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
+        elif algo == 1:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_contour_hyperbolic_krogstad(L, h, M)
+        elif algo == 2:
+            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_scale_square_krogstad(L, h)
+        else:
+            raise ValueError('No such ETDRK4 coefficient algorithm!')
+        v = etdrk4_scheme_krogstad(Ns, w, v, 
+                                   E, E2, f1, f2, f3, f4, f5, f6, q)
+    else:
+        raise ValueError('No such ETDRK4 scheme!')
+
+    return v
+
+
+def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) wth homogeneous
+    Dirichlet boundary condtions (DBC-DBC) by ETDRK4 shceme.
     This method allows very large time step.
     
     Thus ETDRK4 is much faster than Strang Splitting or DCT.
     For example, when space is discretized in N = 256, then Splitting
-    method needs at leat Ns = 1601 to achive the same accuracy of ETDRK4 
+    method needs at leat Ns = 1601 to achieve the same accuracy of ETDRK4 
     with Ns = 11. This is remarkable. 
 
     The MDE is:
@@ -339,10 +384,9 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0, scheme=0):
     non-diagonal.
     '''
 
-    ds = 1. / (Ns-1)
+    if h is None:
+        h = 1. / (Ns-1)
     N = np.size(W) - 1
-    #D, xx = cheb_D1_mat(N)
-    #u = np.ones((N+1,1))
     u = u0.copy()
     u.shape = (N+1, 1)
     u[0] = 0.; u[N] = 0. # Dirichlet boundary condition
@@ -350,89 +394,309 @@ def cheb_mde_dirichlet_etdrk4(W, u0, Lx, Ns, algo=0, scheme=0):
     w = -W[1:N]
     w.shape = (N-1, 1)
 
-    h = ds
-    #L = np.dot(D, D) # L = D^2
     D1t, L, x = cheb_D2_mat_dirichlet_dirichlet(N)
     L = (4. / Lx**2) * L
 
-    M = 32
-    R = 15.
-    
-    if scheme == 0:
-        if algo == 0:
-            E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
-        elif algo == 1:
-            E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
-        elif algo == 2:
-            E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
-        else:
-            E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
-        v = etdrk4_scheme_coxmatthews(Ns, w, v, E, E2, Q, f1, f2, f3)
-    elif scheme == 1:
-        if algo == 0:
-            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
-        elif algo == 1:
-            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_contour_hyperbolic_krogstad(L, h, M)
-        elif algo == 2:
-            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_scale_square_krogstad(L, h)
-        else:
-            E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
-        v = etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6)
-    else:
-        raise ValueError('No such ETDRK4 scheme!')
+    #M = 32
+    #R = 15.
+    #if scheme == 0:
+    #    if algo == 0:
+    #        E, E2, Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
+    #    elif algo == 1:
+    #        E, E2, Q, f1, f2, f3 = etdrk4_coeff_contour_hyperbolic(L, h, M)
+    #    elif algo == 2:
+    #        E, E2, Q, f1, f2, f3 = etdrk4_coeff_scale_square(L, h)
+    #    else:
+    #        raise ValueError('No such ETDRK4 coefficient algorithm!')
+    #    v = etdrk4_scheme_coxmatthews(Ns, w, v, E, E2, Q, f1, f2, f3)
+    #elif scheme == 1:
+    #    if algo == 0:
+    #        E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_nondiag_krogstad(L, h, M, R)
+    #    elif algo == 1:
+    #        E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_contour_hyperbolic_krogstad(L, h, M)
+    #    elif algo == 2:
+    #        E, E2, f1, f2, f3, f4, f5, f6 = etdrk4_coeff_scale_square_krogstad(L, h)
+    #    else:
+    #        raise ValueError('No such ETDRK4 coefficient algorithm!')
+    #    v = etdrk4_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6)
+    #else:
+    #    raise ValueError('No such ETDRK4 scheme!')
 
-    u[1:N] = v[:]
+    if q is None:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+    else:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q[:,1:N], algo, scheme)
+
+    u[1:N] = v
     return (u, .5*(x+1.)*Lx)
 
 
-def cheb_mde_neumann_etdrk4(W, u0, Lx, Ns):
+def cheb_mde_neumann_etdrk4(W, u0, Lx, Ns, h=None, q=None, algo=1, scheme=1):
     '''
     Solution of modified diffusion equation (MDE) with 
-    Neumann boundary condition (NBC) by ETDRK4 shceme.
+    homogeneous Neumann boundary conditions (NBC-NBC) by ETDRK4 shceme.
     NBC is also called Fixed flux boundary condition.
 
     The MDE is:
-        dq/dt = Dq + Wq
+        dq/dt = Dq - Wq
         dq/dx |(x=-1) = 0, t>=0
         dq/dx |(x=+1) = 0, t>=0
         q(x,0) = 1, -1<x<1
     where D is Laplace operator.
+
+    :param:q: Optional. If present, it should be an Ns x Lx array.
     '''
 
-    ds = 1. / (Ns-1)
+    if h is None:
+        h = 1. / (Ns-1)
     N = np.size(W) - 1
-    D, xx = cheb_D1_mat(N)
     u = u0.copy()
     u.shape = (N+1,1)
     v = u.copy()
     w = -W
     w.shape = (N+1, 1)
 
-    h = ds
-    M = 32
-    R = 15.
-    D1 = np.zeros_like(D)
-    D1[1:N,:] = D[1:N,:]
-    L = np.dot(D, D1) 
+    D1t, L, x = cheb_D2_mat_robin_robin(N, 0., 0.)
     L = (4. / Lx**2) * L
-    Q, f1, f2, f3 = etdrk4_coeff_nondiag(L, h, M, R)
 
-    A = h * L
-    E = expm(A)
-    E2 = expm(A/2)
+    v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
 
-    for j in xrange(Ns-1):
-        Nu = w * v
-        a = np.dot(E2, v) + np.dot(Q, Nu)
-        Na = w * a
-        b = np.dot(E2, v) + np.dot(Q, Na)
-        Nb = w * b
-        c = np.dot(E2, a) + np.dot(Q, 2*Nb-Nu)
-        Nc = w * c
-        v = np.dot(E, v) + np.dot(f1, Nu) + 2 * np.dot(f2, Na+Nb) + \
-            np.dot(f3, Nc)
+    return (v, .5*(x+1.)*Lx)
 
-    return (v, .5*(xx+1.)*Lx)
+
+def cheb_mde_neumann_dirichlet_etdrk4(W, u0, Lx, Ns, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    NBC at lower boundary and DBC at higher boundary (NBC-DBC)
+    by ETDRK4 shceme.
+
+    The MDE is:
+        dq/dt = Dq - Wq
+        dq/dx |(x=-1) = 0, t>=0
+        q(x=+1) = 0, t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u[1:]
+    w = -W[1:]
+    w.shape = (N, 1)
+
+    D1t, L, x = cheb_D2_mat_robin_dirichlet(N, 0.)
+    L = (4. / Lx**2) * L
+
+    if q is None:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+    else:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q[:,1:], algo, scheme)
+
+    u[1:] = v
+    return (u, .5*(x+1.)*Lx)
+
+
+def cheb_mde_dirichlet_neumann_etdrk4(W, u0, Lx, Ns, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    DBC at lower boundary and NBC at higher boundary (DBC-NBC)
+    by ETDRK4 shceme.
+
+    The MDE is:
+        dq/dt = Dq - Wq
+        q(x=-1) = 0, t>=0
+        dq/dx |(x=+1) = 0, t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+    
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u[:-1]
+    w = -W[:-1]
+    w.shape = (N, 1)
+
+    D1t, L, x = cheb_D2_mat_dirichlet_robin(N, 0.)
+    L = (4. / Lx**2) * L
+
+    if q is None:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+    else:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q[:,:-1], algo, scheme)
+
+    u[:-1] = v
+    return (u, .5*(x+1.)*Lx)
+
+
+def cheb_mde_robin_dirichlet_etdrk4(W, u0, Lx, Ns, ka, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    RBC at lower boundary and DBC at higher boundary (RBC-DBC)
+    by ETDRK4 shceme.
+
+    The MDE is:
+        dq/dt = Dq - Wq
+        kq + dq/dx  = 0, x = -1 (ka) t>=0
+        q(x=+1) = 0, t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u[1:]
+    w = -W[1:]
+    w.shape = (N, 1)
+
+    D1t, L, x = cheb_D2_mat_robin_dirichlet(N, ka)
+    L = (4. / Lx**2) * L
+
+    if q is None:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+    else:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q[:,1:], algo, scheme)
+
+    u[1:] = v
+    return (u, .5*(x+1.)*Lx)
+
+
+def cheb_mde_dirichlet_robin_etdrk4(W, u0, Lx, Ns, kb, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    DBC at lower boundary and RBC at higher boundary (DBC-RBC)
+    by ETDRK4 shceme.
+
+    The MDE is:
+        dq/dt = Dq + Wq
+        q(x=-1) = 0, t>=0
+        kq + dq/dx = 0, x = +1 (kb), t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u[:-1]
+    w = -W[:-1]
+    w.shape = (N, 1)
+
+    D1t, L, x = cheb_D2_mat_dirichlet_robin(N, kb)
+    L = (4. / Lx**2) * L
+
+    if q is None:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+    else:
+        v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q[:,:-1], algo, scheme)
+
+    u[:-1] = v
+    return (u, .5*(x+1.)*Lx)
+
+
+def cheb_mde_robin_neumann_etdrk4(W, u0, Lx, Ns, ka, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    RBC at lower boundary and NBC at higher boundary (RBC-RBC) 
+    by ETDRK4 shceme.
+    NBC is also called Fixed flux boundary condition.
+
+    The MDE is:
+        dq/dt = Dq + Wq
+        kq + dq/dx = 0, x = -1 (ka), t>=0
+        dq/dx = 0, x = +1, t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+    
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u.copy()
+    w = -W
+    w.shape = (N+1, 1)
+
+    D1t, L, x = cheb_D2_mat_robin_robin(N, ka, 0.)
+    L = (4. / Lx**2) * L
+
+    v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+
+    return (v, .5*(x+1.)*Lx)
+
+
+def cheb_mde_neumann_robin_etdrk4(W, u0, Lx, Ns, kb, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    NBC at lower boundary and RBC at higher boundary (RBC-RBC) 
+    by ETDRK4 shceme.
+    NBC is also called Fixed flux boundary condition.
+
+    The MDE is:
+        dq/dt = Dq + Wq
+        dq/dx = 0, x = -1, t>=0
+        kq + dq/dx = 0, x = +1 (kb), t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u.copy()
+    w = -W
+    w.shape = (N+1, 1)
+
+    D1t, L, x = cheb_D2_mat_robin_robin(N, 0., kb)
+    L = (4. / Lx**2) * L
+
+    v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+
+    return (v, .5*(x+1.)*Lx)
+
+
+def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb, h=None, q=None, algo=1, scheme=1):
+    '''
+    Solution of modified diffusion equation (MDE) with 
+    RBCs at both boundaries  (RBC-RBC) by ETDRK4 shceme.
+    NBC is also called Fixed flux boundary condition.
+
+    The MDE is:
+        dq/dt = Dq + Wq
+        kq + dq/dx = 0, x = -1 (ka), t>=0
+        kq + dq/dx = 0, x = +1 (kb), t>=0
+        q(x,0) = 1, -1<x<1
+    where D is Laplace operator.
+    '''
+
+    if h is None:
+        h = 1. / (Ns-1)
+    N = np.size(W) - 1
+    u = u0.copy()
+    u.shape = (N+1,1)
+    v = u.copy()
+    w = -W
+    w.shape = (N+1, 1)
+
+    D1t, L, x = cheb_D2_mat_robin_robin(N, ka, kb)
+    L = (4. / Lx**2) * L
+
+    v = cheb_mde_core_etdrk4(w, v, L, Ns, h, q, algo, scheme)
+
+    return (v, .5*(x+1.)*Lx)
 
 
 def cheb_mde_robin_etdrk4_1(W, u0, Lx, Ns, ka, kb):
@@ -601,7 +865,7 @@ def cheb_mde_robin_etdrk4_2(W, u0, Lx, Ns, ka, kb):
     return (v, .5*(xx+1.)*Lx)
 
 
-def cheb_mde_robin_etdrk4(W, u0, Lx, Ns, ka, kb):
+def cheb_mde_robin_etdrk4_4(W, u0, Lx, Ns, ka, kb):
     '''
     Solution of modified diffusion equation (MDE) with 
     Robin boundary condition (RBC) by ETDRK4 shceme.

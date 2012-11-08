@@ -19,14 +19,15 @@ __author__ = "Yi-Xin Liu <liuyxpp@gmail.com>"
 __license__ = "BSD License"
 __version__ = "0.1"
 
+from .common import *
 from .misc import *
 from .tridiag import *
-from .etdrk4 import * # ETDRK4 schemes and coefficients
-from .cheb import * # Chebyshev polynomials
 from .chebt import * # Chebyshev transform
-from .chebi import * # Chebyshev interpolations
 from .chebd import * # Chebyshev differentiation
+from .cheb import * # Chebyshev polynomials
+from .chebi import * # Chebyshev interpolations
 from .integral import *
 from .chebq import * # Chebyshev quadratures
+from .etdrk4 import * # ETDRK4 schemes and coefficients
 from .cheba import * # Chebyshev applications on solution of PDEs
 

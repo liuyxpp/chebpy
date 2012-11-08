@@ -128,35 +128,58 @@ def plot_error_Ns():
 
 def plot_error_Ns_N():
     data_path = 'Ns_convergence/'
-    data_name = 'Cox_Matthews/exact_OSCHEB_N8192_Ns200000/Ns_DBC_N'
+    data_name = 'Krogstad/exact_OSCHEB_N8192_Ns200000/Ns_DBC_N'
     data_32 = data_path + data_name + '32'
     data_64 = data_path + data_name + '64'
+    data_96 = data_path + data_name + '96'
+    data_100 = data_path + data_name + '100'
     data_128 = data_path + data_name + '128'
+    data_160 = data_path + data_name + '160'
+    data_192 = data_path + data_name + '192'
+    data_224 = data_path + data_name + '224'
     data_256 = data_path + data_name + '256'
 
     mat_krog_32 = loadmat(data_32)
     mat_krog_64 = loadmat(data_64)
+    mat_krog_96 = loadmat(data_96)
+    mat_krog_100 = loadmat(data_100)
     mat_krog_128 = loadmat(data_128)
+    mat_krog_160 = loadmat(data_160)
+    mat_krog_192 = loadmat(data_192)
+    mat_krog_224 = loadmat(data_224)
     mat_krog_256 = loadmat(data_256)
 
     Ns_32 = mat_krog_32['Ns1_3']
     Ns_64 = mat_krog_64['Ns1_3']
+    Ns_96 = mat_krog_96['Ns1_3']
+    Ns_100 = mat_krog_100['Ns1_3']
     Ns_128 = mat_krog_128['Ns1_3']
+    Ns_160 = mat_krog_160['Ns1_3']
+    Ns_192 = mat_krog_192['Ns1_3']
+    Ns_224 = mat_krog_224['Ns1_3']
     Ns_256 = mat_krog_256['Ns1_3']
     err_32 = mat_krog_32['err1_3']
     err_64 = mat_krog_64['err1_3']
+    err_96 = mat_krog_96['err1_3']
+    err_100 = mat_krog_100['err1_3']
     err_128 = mat_krog_128['err1_3']
+    err_160 = mat_krog_160['err1_3']
+    err_192 = mat_krog_192['err1_3']
+    err_224 = mat_krog_224['err1_3']
     err_256 = mat_krog_256['err1_3']
 
     plt.figure()
     plt.plot(Ns_32, err_32, 'bv-', label='$N = 32$')
     plt.plot(Ns_64, err_64, 'g^-', label='$N = 64$')
-    plt.plot(Ns_128, err_128, 'mD-', label='$N = 128$')
+    plt.plot(Ns_96, err_96, color= '#908000', linestyle='-', marker='p', label='$N = 96$')
+    plt.plot(Ns_100, err_100, color='#D02030', linestyle='-', marker='s', label='$N = 100$')
+    plt.plot(Ns_128, err_128, 'kD-', label='$N = 128$')
+    plt.plot(Ns_160, err_160, 'y*-', label='$N = 160$')
+    plt.plot(Ns_192, err_192, 'c>-', label='$N = 192$')
+    plt.plot(Ns_224, err_224, 'm<-', label='$N = 224$')
     plt.plot(Ns_256, err_256, 'ro-', label='$N = 256$')
-    #plt.plot(Ns3[:-1], err3[:-1], 'mD-', label='ETDRK4-Cox-Matthews')
-    #plt.plot(Ns4[:-1], err4[:-1], 'ro-', label='ETDRK4-Krogstad')
     plt.grid('on')
-    #plt.axis([9e-5, 1.1, 1e-18, 0.1])
+    plt.axis([5e-6, 10., 1e-14, 0.1])
     plt.legend(loc='lower right')
     plt.xscale('log')
     plt.yscale('log')
@@ -172,9 +195,9 @@ def plot_q():
 
 
 if __name__ == '__main__':
-    plot_error_N()
+    #plot_error_N()
     #plot_error_Ns()
-    #plot_error_Ns_N()
+    plot_error_Ns_N()
     #plot_q()
     #plot_w()
     #plot_u0()
