@@ -266,7 +266,7 @@ def cheb_mde_dirichlet_oscheb(W, u0, Lx, Ns):
     and fast Chebyshev transform.
 
     Ref:
-        Her, S. M.; Garcia-Cervera, C. J.; Fredrickson, G. H. macromolecules, 2012, 45, 2905.
+        Hur, S. M.; Garcia-Cervera, C. J.; Fredrickson, G. H. macromolecules, 2012, 45, 2905.
 
     The MDE is:
         dq/dt = Dq - Wq
@@ -299,7 +299,7 @@ def cheb_mde_neumann_oscheb(W, u0, Lx, Ns):
     and fast Chebyshev transform.
 
     Ref:
-        Her, S. M.; Garcia-Cervera, C. J.; Fredrickson, G. H. macromolecules, 2012, 45, 2905.
+        Hur, S. M.; Garcia-Cervera, C. J.; Fredrickson, G. H. macromolecules, 2012, 45, 2905.
 
     The MDE is:
         dq/dt = Dq - Wq

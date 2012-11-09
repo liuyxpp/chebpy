@@ -3,7 +3,7 @@
 chebpy.etdrk4
 =============
 
-Numerical integration on equispaced grid.
+ETDRK4 class and related methods.
 
 """
 
@@ -12,12 +12,11 @@ from scipy.linalg import expm, expm2, expm3, inv
 from scipy.fftpack import dst
 from scipy.io import loadmat, savemat
 
-from chebpy import DIRICHLET, NEUMANN, ROBIN
+from chebpy import BC, DIRICHLET, NEUMANN, ROBIN
 from chebpy import cheb_D2_mat_dirichlet_dirichlet, cheb_D2_mat_robin_robin
 from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_dirichlet
 
-__all__ = ['BC', # class for boundary condition
-           'ETDRK4', # ETDRK4 class
+__all__ = ['ETDRK4', # ETDRK4 class
            'etdrk4_coeff_nondiag', # complex contour integration
            'phi_contour_hyperbolic',
            'etdrk4_coeff_contour_hyperbolic',
@@ -28,45 +27,6 @@ __all__ = ['BC', # class for boundary condition
            'etdrk4_coeff_contour_hyperbolic_krogstad',
            'etdrk4_coeff_scale_square_krogstad',
           ]
-
-class BC(object):
-    def __init__(self, kind=None, vc=None):
-        '''
-        The boundary condition can be generally written as:
-            alpha * du/dx + beta * u = gamma
-        It is convenient to specified BC by a 3-element vector:
-            (alpha, beta, gamma)
-        :param:kind: kind of boundary conditions.
-        :param:vc: boundary condition specified by a vec with 3 elements.
-        '''
-        if vc is not None and len(vc) != 3:
-            raise ValueError('The vector to specify boundary condtion'
-                             'must has 3 elements!')
-        if kind == ROBIN and vc is None:
-            raise ValueError('Robin BC needs a coefficient vector.')
-            
-        self.kind = kind
-        if kind is None:
-            if vc is None:
-                self.kind = DIRICHLET
-            else:
-                self.kind = ROBIN
-
-        if self.kind == DIRICHLET:
-            self.alpha = 0
-            self.beta = 1.
-            self.gamma = 0
-        elif self.kind == NEUMANN:
-            self.alpha = 1.
-            self.beta = 0
-            self.gamma = 0
-        elif kind == ROBIN:
-            self.alpha = vc[0]
-            self.beta = vc[1]
-            self.gamma = vc[2]
-        else:
-            raise ValueError('kind ' + str(kind) + ' is not supported.')
-
 
 class ETDRK4(object):
     def __init__(self, Lx, N, Ns, h=None, 
@@ -167,46 +127,70 @@ class ETDRK4(object):
         '''
             dq/dt = Dq + Wq = Dq - wq
         '''
-        u = u0.copy()
+        u = u0.copy(); u.shape = (u.size, 1)
+        E = self.E; E2 = self.E2; Q = self.Q
+        f1 = self.f1; f2 = self.f2; f3 = self.f3
+        f4 = self.f4; f5 = self.f5; f6 = self.f6
         if self.lbc.kind == DIRICHLET:
             if self.rbc.kind == DIRICHLET:
                 v = u[1:-1]
-                W = -w[1:-1]
-            else:
-                v = u[:-1]
-                W = -w[:-1]
-        else:
-            if self.rbc.kind == DIRICHLET:
-                v = u[1:]
-                W = -w[1:]
-            else:
-                v = u
-                W = -w
-        E = self.E
-        E2 = self.E2
-        Q = self.Q
-        f1 = self.f1
-        f2 = self.f2
-        f3 = self.f3
-        f4 = self.f4
-        f5 = self.f5
-        f6 = self.f6
-        if self.scheme == 0:
-            v = etdrk4_scheme_coxmatthews(
-                    self.Ns, W, v, E, E2, Q, f1, f2, f3)
-        else:
-            v = etdrk4_scheme_krogstad(
-                    self.Ns, W, v, E, E2, f1, f2, f3, f4, f5, f6, q)
-
-        if self.lbc.kind == DIRICHLET:
-            if self.rbc.kind == DIRICHLET:
+                W = -w[1:-1]; W.shape = (W.size, 1)
+                if self.scheme == 0:
+                    v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6, q[:,1:-1])
+                    else:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
                 u[1:-1] = v
             else:
+                v = u[:-1]
+                W = -w[:-1]; W.shape = (W.size, 1)
+                if self.scheme == 0:
+                    v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6, q[:,:-1])
+                    else:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
                 u[:-1] = v
         else:
             if self.rbc.kind == DIRICHLET:
+                v = u[1:]
+                W = -w[1:]; W.shape = (W.size, 1)
+                if self.scheme == 0:
+                    v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6, q[:,1:])
+                    else:
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
                 u[1:] = v
             else:
+                v = u
+                W = -w; W.shape = (W.size, 1)
+                if self.scheme == 0:
+                    v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    v = etdrk4_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6, q)
                 u = v
 
         return (u, self.x)
