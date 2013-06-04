@@ -94,7 +94,7 @@ except ImportError:
 
 setup(
     name='chebpy',
-    version='0.2',
+    version='0.3',
     license='BSD',
     description='Chebyshev polynomial based spectral methods of PDEs.',
     author='Yi-Xin Liu',

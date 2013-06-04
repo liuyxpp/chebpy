@@ -17,7 +17,7 @@ Equations: Algorithms for Scientists and Engineers*, 2008, Springer
 
 __author__ = "Yi-Xin Liu <liuyxpp@gmail.com>"
 __license__ = "BSD License"
-__version__ = "0.1"
+__version__ = "0.3"
 
 from .common import *
 from .misc import *
