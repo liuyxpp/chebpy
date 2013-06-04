@@ -28,7 +28,8 @@ from .cheb import * # Chebyshev polynomials
 from .chebi import * # Chebyshev interpolations
 from .integral import *
 from .chebq import * # Chebyshev quadratures
-from .osf import *
+from .osf import * # OSS and OSC class
+from .oscheb import * # OSCHEB class
 from .etdrk4 import * # ETDRK4 class, schemes and coefficients
 from .cheba import * # Chebyshev applications on solution of PDEs
 

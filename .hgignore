@@ -11,4 +11,4 @@ chebpy.egg-info/*
 *.tar.gz
 *.tar.Z
 *.pdf
-
+*.pst
