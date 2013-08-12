@@ -129,7 +129,7 @@ def cheb_interpolation_point(y, f):
     Barycentric Lagrange Interpolation for a single point of the
     Chebyshev Gauss-Lobatto form.
 
-    :param:x: the point where the function value to be evaluated.
+    :param:y: the point where the function value to be evaluated.
     :param:f: the function value at the specified grids.
     '''
 
