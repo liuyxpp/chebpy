@@ -19,6 +19,7 @@ from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_dirichlet
 __all__ = ['ETDRK4', # ETDRK4 class
            'ETDRK4FxCy', # ETDRK4 Fourier x and Chebyshev y
            'ETDRK4FxyCz', # ETDRK4 Fourier x, y, and Chebyshev z
+           'ETDRK4Polar', # ETDRK4 in polar coordinates, Fourier theta and Chebyshev 
            'etdrk4_coeff_nondiag', # complex contour integration
            'phi_contour_hyperbolic',
            'etdrk4_coeff_contour_hyperbolic',
@@ -702,6 +703,265 @@ class ETDRK4FxyCz(object):
                                                f4, f5, f6, q)
                     else:
                         v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
+                u = v
+
+        return u
+
+
+class ETDRK4Polar(object):
+    def __init__(self, R, Nr, Nt, Ns, h=None, c=1.0,  
+                 lbc=BC(), rbc=BC(), algo=1, scheme=1):
+        '''
+        The PDE is in the polar coordinate,
+            du/dt = cLu - wu
+        where u=u(r,theta), L=d^2/dr^2 + (1/r)d/dr + (1/r^2)d^2/dtheta^2,
+        w=w(r,theta), c is a constant. Domain is
+            theta [0, 2*pi]
+            r     [0, R]
+        First, do a FFT in theta axis to obtain
+            du(r,kt)/dt = c L u(r,kt) - Ft[w(r,theta)u(r,theta)]
+        where L = d^2/dr^2 + (1/r)d/dr - (1/r^2)kt^2*I
+        See details in the Notebook (page 2013.8.15).
+
+        The defaut left BC and right BC are DBCs.
+
+        Test: None.
+
+        :param:R: physical size of the disk.
+        :param:Nr: r axis discretization, 0, 1, 2, ..., Nr. Nr must be ODD.
+        :param:Nt: theta axis discretization, 0, 1, 2, ..., Nt-1
+        :param:Ns: number of grid points in time.
+        :param:lbc: left boundary condition.
+        :type:lbc: class BC
+        :param:rbc: right boundary condition.
+        :type:rbc: class BC
+        :param:h: time step.
+        :param:algo: algorithm for calculation of RK4 coefficients.
+        :param:scheme: RK4 scheme.
+        '''
+        self.R = R 
+        self.Nr = Nr
+        self.Nt = Nt
+        self.Ns = Ns
+        if h is None:
+            self.h = 1. / (Ns - 1)
+        else:
+            self.h = h
+        self.c = c
+        self.lbc = lbc
+        self.rbc = rbc
+        self.algo = algo
+        self.scheme = scheme
+        
+        self.update()
+
+    def update(self):
+        Nt = self.Nt
+        L = self._calc_operator() # the shape of coeff depends on BC
+        N, N = L.shape
+        dim = [Nt, N, N]
+        self.E = np.zeros(dim)
+        self.E2 = np.zeros(dim)
+        self.Q = np.zeros(dim)
+        self.f1 = np.zeros(dim)
+        self.f2 = np.zeros(dim)
+        self.f3 = np.zeros(dim)
+        self.f4 = np.zeros(dim)
+        self.f5 = np.zeros(dim)
+        self.f6 = np.zeros(dim)
+        for i in xrange(Nt):
+            if i < Nt/2+1:
+                kt = i 
+            else:
+                kt = i - Nt
+            # R**(-2) for maping from [0,R] to [0,1]
+            Lk = (L - np.diag((kt/self.r)**2)) / self.R**2
+            self._calc_RK4_coeff(i, Lk)
+
+    def _calc_operator(self):
+        '''
+            Currently, only symmetric boundary conditions are allowed, that is
+                DBC-DBC
+                RBC-RBC (including the special case NBC)
+        '''
+        if self.lbc.kind == DIRICHLET:
+            if self.rbc.kind == DIRICHLET:
+                D1t, D2t, r = cheb_D2_mat_dirichlet_dirichlet(self.Nr)
+                r = r[1:-1]
+            else:
+                D1t, D2t, r = cheb_D2_mat_dirichlet_robin(self.Nr, 
+                                                       self.rbc.beta)
+                r = r[:-1]
+        else:
+            if self.rbc.kind == DIRICHLET:
+                D1t, D2t, r = cheb_D2_mat_robin_dirichlet(self.Nr, 
+                                                       self.lbc.beta)
+                r = r[1:]
+            else:
+                D1t, D2t, r = cheb_D2_mat_robin_robin(self.Nr, 
+                                                   self.lbc.beta,
+                                                   self.rbc.beta)
+
+        N, N = D2t.shape # N should be either Nr+1 or Nr-1
+        self.r = r[:N/2].reshape(N/2) # reshape to vector
+        D1 = D2t[:N/2,:N/2]
+        D2 = D2t[:N/2,N-1:N/2-1:-1]
+        E1 = D1t[:N/2,:N/2]
+        E2 = D1t[:N/2,N-1:N/2-1:-1]
+        MR = np.diag(1/self.r)
+        #print self.r.shape, D1.shape, D2.shape, E1.shape, E2.shape, MR.shape
+        L = (D1 + D2) + (np.dot(MR,E1) + np.dot(MR,E2))
+        return L
+
+    def _calc_RK4_coeff(self, i, L):
+        L = self.c * L # the actual operator
+        h = self.h
+        c = 1.0
+        M = 32; R = 15.;
+        if self.scheme == 0:
+            if self.algo == 0:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_nondiag(L, h, M, R)
+            elif self.algo == 1:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_contour_hyperbolic(L, h, M)
+            elif self.algo == 2:
+                E, E2, Q, f1, f2, f3 = \
+                    etdrk4_coeff_scale_square(L, h)
+            else:
+                raise ValueError('No such ETDRK4 coefficient algorithm!')
+            self.E[i] = E[:,:]
+            self.E2[i] = E2[:,:]
+            self.Q[i] = Q[:,:]
+            self.f1[i] = f1[:,:]
+            self.f2[i] = f2[:,:]
+            self.f3[i] = f3[:,:]
+            f4 = None; f5 = None; f6 = None
+        elif self.scheme == 1:
+            if self.algo == 0:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_nondiag_krogstad(L, h, M, R)
+            elif self.algo == 1:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c, M)
+            elif self.algo == 2:
+                E, E2, f1, f2, f3, f4, f5, f6 = \
+                    etdrk4_coeff_scale_square_krogstad(L, h)
+            else:
+                raise ValueError('No such ETDRK4 coefficient algorithm!')
+            self.E[i] = E[:,:]
+            self.E2[i] = E2[:,:]
+            Q = None
+            self.f1[i] = f1[:,:]
+            self.f2[i] = f2[:,:]
+            self.f3[i] = f3[:,:]
+            self.f4[i] = f4[:,:]
+            self.f5[i] = f5[:,:]
+            self.f6[i] = f6[:,:]
+        else:
+            raise ValueError('No such ETDRK4 scheme!')
+
+
+    def solve(self, w, u0, q=None):
+        '''
+            w = w(theta, r)
+            u0 = q(theta, r, t=0)
+            q = q(theta, r, t)
+            for r in (0, R] and t in [0,1].
+            Discretization form:
+                w(i,j), u0(i,j), q(i,j,t)
+                i in [0, Nt-1]
+                j in [0, (Nr+1)/2]
+                t in [0, Ns]
+        The particular order of theta, r is chosen to be compatible with
+            etdrk4fxcy_scheme_krogstad
+        which perform FFT in first dimension.
+        '''
+        u = u0.copy()
+        E = self.E; E2 = self.E2; Q = self.Q
+        f1 = self.f1; f2 = self.f2; f3 = self.f3
+        f4 = self.f4; f5 = self.f5; f6 = self.f6
+        if self.lbc.kind == DIRICHLET:
+            if self.rbc.kind == DIRICHLET:
+                v = u[:,:-1]
+                W = -w[:,:-1]
+                if self.scheme == 0:
+                    if q is not None:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                                                Q, f1, f2, f3, q[:,:,1:-1])
+                    else:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                                   f4, f5, f6, q[:,:,1:-1])
+                    else:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
+                u[:,:-1] = v
+            else: # not allowed in current implementation.
+                v = u[:,:-1]
+                W = -w[:,:-1]
+                if self.scheme == 0:
+                    if q is not None:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                                                Q, f1, f2, f3, q[:,:,:-1])
+                    else:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                                   f4, f5, f6, q[:,:,:-1])
+                    else:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
+                u[:,:-1] = v
+        else: # not allowed in current implementation.
+            if self.rbc.kind == DIRICHLET:
+                v = u[:,1:]
+                W = -w[:,1:]
+                if self.scheme == 0:
+                    if q is not None:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                                                      Q, f1, f2, f3, q[:,:,1:])
+                    else:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                                   f4, f5, f6, q[:,:,1:])
+                    else:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6)
+                u[:,1:] = v
+            else:
+                v = u
+                W = -w
+                if self.scheme == 0:
+                    if q is not None:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3, q)
+                    else:
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                                                  E, E2, Q, f1, f2, f3)
+                else:
+                    if q is not None:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
+                                               E, E2, f1, f2, f3, 
+                                               f4, f5, f6, q)
+                    else:
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
                                                E, E2, f1, f2, f3, 
                                                f4, f5, f6)
                 u = v
