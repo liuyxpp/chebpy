@@ -19,7 +19,8 @@ from chebpy import cheb_D2_mat_dirichlet_robin, cheb_D2_mat_robin_dirichlet
 __all__ = ['ETDRK4', # ETDRK4 class
            'ETDRK4FxCy', # ETDRK4 Fourier x and Chebyshev y
            'ETDRK4FxyCz', # ETDRK4 Fourier x, y, and Chebyshev z
-           'ETDRK4Polar', # ETDRK4 in polar coordinates, Fourier theta and Chebyshev 
+           'ETDRK4Polar', # ETDRK4 in polar coordinates, Fourier theta and Chebyshev r
+           'ETDRK4Cylind', # ETDRK4 in cylindrical coordinates, Fourier theta and z and Chebyshev r 
            'etdrk4_coeff_nondiag', # complex contour integration
            'phi_contour_hyperbolic',
            'etdrk4_coeff_contour_hyperbolic',
@@ -540,7 +541,7 @@ class ETDRK4FxyCz(object):
                 if j < Ny/2+1:
                     ky = j * (2 * np.pi / self.Ly)
                 else:
-                    ky = (j - Nx) * (2 * np.pi / self.Ly)
+                    ky = (j - Ny) * (2 * np.pi / self.Ly)
                 k2 = kx**2 + ky**2
                 #L = self._calc_operator(k2)
                 self._calc_RK4_coeff(i, j, L-k2*I)
@@ -1551,10 +1552,10 @@ def etdrk4fxycz_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6, q=None)
     FFT in x and y, Chebyshev in z.
     Krogstad ETDRK4, whose stiff order is 3 better than Cox-Matthews ETDRK4.
     '''
-    #vk = fft2(v, axes=(0,1))
-    ak = np.zeros_like(v)
-    bk = np.zeros_like(v)
-    ck = np.zeros_like(v)
+    vk = fft2(v, axes=(0,1))
+    ak = np.zeros_like(vk)
+    bk = np.zeros_like(vk)
+    ck = np.zeros_like(vk)
     Nx, Ny, Nz = v.shape
     for s in xrange(Ns-1):
         vk = fft2(v, axes=(0,1))
@@ -1574,7 +1575,7 @@ def etdrk4fxycz_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6, q=None)
         Nbk = fft2(Nb, axes=(0,1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                ck[i] = np.dot(E[i,j], vk[i,j]) + \
+                ck[i,j] = np.dot(E[i,j], vk[i,j]) + \
                         np.dot(f3[i,j], Nuk[i,j]) + \
                         np.dot(f4[i,j], Nbk[i,j]-Nuk[i,j])
         c = ifft2(ck, axes=(0,1)).real
@@ -1582,7 +1583,7 @@ def etdrk4fxycz_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6, q=None)
         Nck = fft2(Nc, axes=(0,1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                vk[i] = ck[i,j] + np.dot(f4[i,j], Nak[i,j]) + \
+                vk[i,j] = ck[i,j] + np.dot(f4[i,j], Nak[i,j]) + \
                         np.dot(f5[i,j], Nuk[i,j]+Nck[i,j]) + \
                         np.dot(f6[i,j], Nak[i,j]+Nbk[i,j])
         v = ifft2(vk, axes=(0,1)).real
