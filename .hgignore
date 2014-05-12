@@ -12,3 +12,6 @@ chebpy.egg-info/*
 *.tar.Z
 *.pdf
 *.pst
+*.DS_Store
+*.sublime-project
+*.sublime-workspace

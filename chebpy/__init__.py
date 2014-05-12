@@ -10,8 +10,7 @@ References
 ----------
 
 * Trefethen, LN *Spectral Methods in Matlab*, 2000, SIAM.
-* Kopriva, DA *Implementing Spectral Methods for Partial Differential 
-Equations: Algorithms for Scientists and Engineers*, 2008, Springer
+* Kopriva, DA *Implementing Spectral Methods for Partial Differential Equations: Algorithms for Scientists and Engineers*, 2008, Springer
 
 """
 
@@ -22,14 +21,14 @@ __version__ = "0.3"
 from .common import *
 from .misc import *
 from .tridiag import *
-from .chebt import * # Chebyshev transform
-from .chebd import * # Chebyshev differentiation
-from .cheb import * # Chebyshev polynomials
-from .chebi import * # Chebyshev interpolations
+from .chebt import *  # Chebyshev transform
+from .chebd import *  # Chebyshev differentiation
+from .cheb import *  # Chebyshev polynomials
+from .chebi import *  # Chebyshev interpolations
 from .integral import *
-from .chebq import * # Chebyshev quadratures
-from .osf import * # OSS and OSC class
-from .oscheb import * # OSCHEB class
-from .etdrk4 import * # ETDRK4 class, schemes and coefficients
-from .cheba import * # Chebyshev applications on solution of PDEs
-
+from .chebq import *  # Chebyshev quadratures
+from .osf import *  # OSS and OSC class
+from .oscheb import *  # OSCHEB class
+from .etdrk4 import *  # ETDRK4 class, schemes and coefficients
+from .etdrk4_ext import *  # Extended ETDRK4 classes
+from .cheba import *  # Chebyshev applications on solution of PDEs

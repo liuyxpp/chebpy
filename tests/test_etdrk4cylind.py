@@ -117,7 +117,7 @@ def cheb_interp3d_r(u, vr):
     Use chebyshev interpolation for the last dimension of cylindrical
     coordinates (theta, z, r).
     u(theta, z, r): source data, note that the range of r is (0, 1]
-    vr: vector to be interpolated, size is Nzp.
+    vr: vector to be interpolated, size is Nrp.
     '''
     Nx, Ny, N2 = u.shape
     Nrp = vr.size

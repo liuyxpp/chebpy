@@ -1321,7 +1321,7 @@ def phi_contour_hyperbolic_old(z, l=0, M=32):
     return np.real((0.5 * 4.4921 * 1.0818 / np.pi) * phi)
 
 
-def phi_contour_hyperbolic(A, t=1, l=0, M=16):
+def phi_contour_hyperbolic(A, t=1, l=0, M=32):
     '''
     Evaluate \phi_l(tA) using complex contour integral methods with hyperbolic contour.
     See my Notebook page 2013.07.05.
@@ -1365,7 +1365,7 @@ def phi_contour_hyperbolic(A, t=1, l=0, M=16):
     return np.real(0.5 * h * mu / np.pi * phi)
 
 
-def etdrk4_coeff_contour_hyperbolic(L, h, M=16):
+def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
     '''
     Evaluate etdrk4 coefficients by complex contour integral using
     hyperbolic contour.
@@ -1399,7 +1399,7 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=16):
     return E1, E2, Q, f1, f2, f3
 
 
-def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=16):
+def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=32):
     '''
     Evaluate etdrk4 coefficients by complex contour integral using
     hyperbolic contour for Krogstad scheme.

@@ -53,35 +53,39 @@ def plot_error_N():
     err41 = mat_krog1['err3']
     err42 = mat_krog2['err3']
 
-    plt.figure()
+    savemat('Nz_convergence',
+        {'Nz_oss':N12,'err_oss':err12,
+        'Nz_oscheb':N22,'err_oscheb':err22,
+        'Nz_etdrk4':N42,'err_etdrk4':err42})
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
     #plt.plot(N11, err11, 'bv-', label='OSS $\Delta s=5e-5$')
-    #plt.plot(N11, err11, 'bv:', mew=.2, mfc='w', mec='b', 
+    #plt.plot(N11, err11, 'bv:', mew=.2, mfc='w', mec='b',
     #         label='OSS $\Delta s=1e-5$')
-    plt.plot(N11[:5], err11[:5], 'bv-', label='OSS $\Delta s=5e-5$')
-    plt.plot(N11[:5], err11[:5], 'bv:', mew=.2, mfc='w', mec='b', 
-             label='OSS $\Delta s=1e-5$')
+    #plt.plot(N11[:5], err11[:5], 'bv-', label='OSS $\Delta s=5e-5$')
+    plt.plot(N12, err12, 'bv-', mew=0, label='OSS')
     #plt.plot(N21, err21, 'g^-', label='OSCHEB $\Delta s=5e-5$')
     #plt.plot(N22, err22, 'g^:', mew=.2, mfc='w', mec='g',
     #         label='OSCHEB $\Delta s=1e-5$')
-    plt.plot(N21[:5], err21[:5], 'g^-', label='OSCHEB $\Delta s=5e-5$')
-    plt.plot(N22[:5], err22[:5], 'g^:', mew=.2, mfc='w', mec='g',
-             label='OSCHEB $\Delta s=1e-5$')
-    plt.plot(N31, err31, 'mD-', label='ETDRK4-Cox-Matthews $\Delta s=5e-5$')
-    plt.plot(N32, err32, 'mD:', mew=.2, mfc='w', mec='m',
-             label='ETDRK4-Cox-Matthews $\Delta s=1e-5$')
-    plt.plot(N41, err41, 'ro-', label='ETDRK4-Krogstad $\Delta s=5e-5$')
-    plt.plot(N42, err42, 'ro:', mew=.2, mfc='w', mec='r',
-             label='ETDRK4-Krogstad $\Delta s=1e-5$')
+    #plt.plot(N21[:5], err21[:5], 'g^-', label='OSCHEB $\Delta s=5e-5$')
+    plt.plot(N22, err22, 'g^-', mew=0, label='OSCHEB$')
+    #plt.plot(N31, err31, 'mD-', label='ETDRK4-Cox-Matthews $\Delta s=5e-5$')
+    #plt.plot(N32, err32, 'mD:', mew=.2, mfc='w', mec='m',
+    #         label='ETDRK4-Cox-Matthews $\Delta s=1e-5$')
+    #plt.plot(N41, err41, 'ro-', label='ETDRK4-Krogstad $\Delta s=5e-5$')
+    plt.plot(N42, err42, 'ro-', mew=0, label='ETDRK4')
     #plt.axis([1, 300, 1e-13, 1])
-    plt.grid('on')
-    plt.legend(loc='upper right')
-    #plt.xscale('log')
+    #plt.grid('on')
+    #plt.legend(loc='upper right')
+    plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('$N_z$')
-    plt.ylabel('Relative error in Q')
-    fig_name = 'analysis/exact_OSCHEB_N8192_Ns200000/N_DBC_Ns_both'
-    plt.savefig(data_path + fig_name, bbox_inches='tight')
-    plt.show()
+    plt.ylabel('Relative error in $Q$')
+    plt.text(0.90,0.90,'(a)',transform=ax.transAxes)
+    fig_name ='analysis/' + data_name2 + '_full'
+    #plt.savefig(data_path+fig_name, bbox_inches='tight')
+    #plt.show()
 
 
 def plot_error_Ns():
@@ -106,24 +110,36 @@ def plot_error_Ns():
     err3 = mat_cox['err1_3']
     err4 = mat_krog['err1_3']
 
-    plt.figure()
-    plt.plot(Ns1, err1, 'bv-', label='OSS')
-    plt.plot(Ns2, err2, 'g^-', label='OSCHEB')
-    plt.plot(Ns3, err3, 'mD-', label='ETDRK4-Cox-Matthews')
-    plt.plot(Ns4, err4, 'ro-', label='ETDRK4-Krogstad')
+    savemat('Ns_convergence_256',
+        {'Ns_oss':Ns1,'err_oss':err1,
+        'Ns_oscheb':Ns2,'err_oscheb':err2,
+        'Ns_etdrk4':Ns4,'err_etdrk4':err4}
+        )
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    plt.plot(Ns1, err1, 'bv-', label='OSS', mew=0)
+    plt.plot(Ns2, err2, 'g^-', label='OSCHEB', mew=0)
+    #plt.plot(Ns3, err3, 'mD-', label='ETDRK4-Cox-Matthews')
+    plt.plot(Ns4, err4, 'ro-', label='ETDRK4', mew=0)
     #plt.plot(Ns3[:-1], err3[:-1], 'mD-', label='ETDRK4-Cox-Matthews')
     #plt.plot(Ns4[:-1], err4[:-1], 'ro-', label='ETDRK4-Krogstad')
-    plt.grid('on')
-    plt.axis([9e-6, 1.1, 1e-11, 10])
+    #plt.grid('on')
+    #plt.ylim((1e-4, 0.1)) # Nz=32
+    #plt.ylim((1e-9, 1.0)) # Nz=64
+    #plt.ylim((1e-12, 1.0)) # Nz=128
+    plt.ylim((1e-11, 1.0)) # Nz=256
     #plt.legend(loc='lower right')
-    plt.legend(loc='upper left')
+    lg = plt.legend(loc='upper left')
+    lg = lg.draw_frame(False)
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('$\Delta s$')
-    plt.ylabel('Relative error in Q')
+    plt.ylabel('Relative error in $Q$')
+    plt.text(0.90,0.90,'(d)',transform=ax.transAxes)
     fig_name = data_path + 'analysis/' + data_name
-    plt.savefig(fig_name, bbox_inches='tight')
-    plt.show()
+    #plt.savefig(fig_name, bbox_inches='tight')
+    #plt.show()
 
 
 def plot_error_Ns_N():
@@ -195,9 +211,9 @@ def plot_q():
 
 
 if __name__ == '__main__':
-    #plot_error_N()
+    plot_error_N()
     #plot_error_Ns()
-    plot_error_Ns_N()
+    #plot_error_Ns_N()
     #plot_q()
     #plot_w()
     #plot_u0()

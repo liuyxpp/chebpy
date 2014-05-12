@@ -4,7 +4,7 @@
 import numpy as np
 import matplotlib.pylab as plt
 
-from chebpy import ETDRK4FxCy, BC, ETDRK4
+from chebpy import ETDRK4FxCy, ETDRK4FxCy2, BC, ETDRK4
 from chebpy import ROBIN, DIRICHLET
 
 def test_etdrk4fxcy():
@@ -26,7 +26,7 @@ def test_etdrk4fxcy():
             h_xx = d^2h/dx^2 = -sin(x)
     since it is periodic in x direction.
     The corresponding w(x,y) is
-            w(x,y) = h_xx + g_xx + (h_x)^2 + (g_y)^2 + 1
+            w(x,y) = h_xx + g_yy + (h_x)^2 + (g_y)^2 + 1
 
     1. For homogeneous NBC (ka=kb=0), a suitable g(y) is
             g(y) = Ay^2(2y-3)/6
@@ -54,7 +54,7 @@ def test_etdrk4fxcy():
     Nx = 64
     Ly = 1.0 # y [0, Ly]
     Ny = 32
-    Ns = 101 
+    Ns = 401 
     ds = 1. / (Ns - 1)
     
     # Periodic in x direction, Fourier
@@ -73,16 +73,17 @@ def test_etdrk4fxcy():
             x = xx[i]
             y = yy[j]
             # RBC
-            q_exact[i,j] = np.exp(-A*y + np.sin(x) - 1)
-            q[0,i,j] = np.exp(-A*y + np.sin(x))
-            w[i,j] = np.cos(x)**2 - np.sin(x) + A**2 + 1
+            #q_exact[i,j] = np.exp(-A*y + np.sin(x) - 1)
+            #q[0,i,j] = np.exp(-A*y + np.sin(x))
+            #w[i,j] = np.cos(x)**2 - np.sin(x) + A**2 + 1
             # homogeneous NBC
-            #q_exact[i,j] = np.exp(A*y**2*(2*y-3)/6 + np.sin(x) - 1)
-            #q[0,i,j] = np.exp(A*y**2*(2*y-3)/6 + np.sin(x))
-            #w[i,j] = (A*y*(y-1))**2 + np.cos(x)**2 - np.sin(x) + A*(2*y-1) + 1
+            q_exact[i,j] = np.exp(A*y**2*(2*y-3)/6 + np.sin(x) - 1)
+            q[0,i,j] = np.exp(A*y**2*(2*y-3)/6 + np.sin(x))
+            w[i,j] = (A*y*(y-1))**2 + np.cos(x)**2 - np.sin(x) + A*(2*y-1) + 1
             # homogeneous DBC
             #q[0,i,j] = np.exp(-A*(y-1)**2 + np.sin(x))
             #q_exact[i,j] = np.exp(-A*(y-1)**2 + np.sin(x) + 1)
+            #w[i, j] = np.cos(x)**2 - np.sin(x) + 4*A**2 + (2*A*(y-1))**2 + 1
             # Fredrickson
             #sech = 1. / np.cosh(0.25*(6*y[j]-3*Ly))
             #w[i,j] = (1 - 2*sech**2)*(np.sin(2*np.pi*x[i]/Lx)+1)
@@ -99,12 +100,21 @@ def test_etdrk4fxcy():
     plt.xlabel('w(y)')
     plt.show()
 
+    # DBC
     #lbc = BC(DIRICHLET, [0.0, 1.0, 0.0]) 
     #rbc = BC(DIRICHLET, [0.0, 1.0, 0.0]) 
-    lbc = BC(ROBIN, [1.0, A, 0.0]) 
-    rbc = BC(ROBIN, [1.0, A, 0.0]) 
-    q_solver = ETDRK4FxCy(Lx, Ly, Nx, Ny, Ns, h=ds, lbc=lbc, rbc=rbc)
+    # RBC
+    #lbc = BC(ROBIN, [1.0, A, 0.0]) 
+    #rbc = BC(ROBIN, [1.0, A, 0.0]) 
+    # NBC
+    lbc = BC(ROBIN, [1.0, 0, 0.0]) 
+    rbc = BC(ROBIN, [1.0, 0, 0.0]) 
+    #q_solver = ETDRK4FxCy(Lx, Ly, Nx, Ny, Ns, h=ds, lbc=lbc, rbc=rbc)
+    q_solver = ETDRK4FxCy2(Lx, Ly, Nx, Ny, Ns, h=ds, lbc=lbc, rbc=rbc)
     q1 = q_solver.solve(w, q[0], q)
+
+    print 'Error =', np.max(np.abs(q1-q_exact))
+
     plt.imshow(q[0])
     plt.xlabel('q_0')
     plt.show()
@@ -114,19 +124,22 @@ def test_etdrk4fxcy():
     plt.imshow(q_exact)
     plt.xlabel('q_exact')
     plt.show()
-    plt.plot(x,q[0,:,Ny/2])
-    plt.plot(x,q1[:,Ny/2])
-    plt.plot(x,q_exact[:,Ny/2])
+    plt.plot(x,q[0,:,Ny/2], label='q0')
+    plt.plot(x,q1[:,Ny/2], label='q_solution')
+    plt.plot(x,q_exact[:,Ny/2], label='q_exact')
+    plt.legend(loc='best')
     plt.xlabel('q[:,Ny/2]')
     plt.show()
-    plt.plot(y,q[0,Nx/4,:])
-    plt.plot(y,q1[Nx/4,:])
-    plt.plot(y,q_exact[Nx/4,:])
+    plt.plot(y,q[0,Nx/4,:], label='q0')
+    plt.plot(y,q1[Nx/4,:], label='q_solution')
+    plt.plot(y,q_exact[Nx/4,:], label='q_exact')
+    plt.legend(loc='best')
     plt.xlabel('q[Nx/4,:]')
     plt.show()
-    plt.plot(y,q[0,Nx*3/4,:])
-    plt.plot(y,q1[Nx*3/4,:])
-    plt.plot(y,q_exact[Nx*3/4,:])
+    plt.plot(y,q[0,Nx*3/4,:], label='q0')
+    plt.plot(y,q1[Nx*3/4,:], label='q_solution')
+    plt.plot(y,q_exact[Nx*3/4,:], label='q_exact')
+    plt.legend(loc='best')
     plt.xlabel('q[Nx*3/4,:]')
     plt.show()
     exit()
@@ -195,6 +208,6 @@ def check(u):
     pass
 
 if __name__ == '__main__':
-    #test_etdrk4fxcy()
-    test_etdrk4()
+    test_etdrk4fxcy()
+    #test_etdrk4()
 

@@ -84,7 +84,7 @@ def cheb_D2_mat(N):
 def cheb_D2_mat_dirichlet_dirichlet(N):
     '''
     Chebyshev differentiation matrix subjecting to DBC-DBC.
-    DBC-DBC: 
+    DBC-DBC:
         Dirichlet at x=-1 and x=+1
 
     Ref:
@@ -111,9 +111,9 @@ def cheb_D2_mat_dirichlet_dirichlet(N):
 def cheb_D2_mat_dirichlet_robin(N, kb):
     '''
     Chebyshev differentiation matrix subjecting to DBC-RBC.
-    DBC-RBC: 
+    DBC-RBC:
         Dirichlet at x=-1 and Robin at x=+1
-    Note: 
+    Note:
         DBC-NBC is a special case with kb = 0
 
     Ref:
@@ -155,9 +155,9 @@ def cheb_D2_mat_dirichlet_robin(N, kb):
 def cheb_D2_mat_robin_dirichlet(N, ka):
     '''
     Chebyshev differentiation matrix subjecting to RBC-DBC.
-    RBC-DBC: 
+    RBC-DBC:
         Robin at x=-1 and Dirichlet at x=+1
-    Note: 
+    Note:
         NBC-DBC is a special case with ka = 0
 
     Ref:
@@ -200,24 +200,27 @@ def cheb_D2_mat_robin_robin(N, ka, kb):
     '''
     Chebyshev differentiation matrix subjecting to RBC-RBC.
     RBC-RBC: Robin at x=-1 and x=+1
-    Note: 
+        du/dx + ka * u = 0 at x=-1
+        du/dx + kb * u = 0 at x=+1.
+    Note:
         NBC-RBC is a special case with ka = 0
         RBC-NBC is a special case with kb = 0
         NBC-NBC is a special case with ka = 0 and kb = 0
 
     Ref:
-        Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite" ACM Trans. Math. Softw. 2000, 26, 465.
+    * Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite"
+    ACM Trans. Math. Softw. 2000, 26, 465.
 
     :res:D1t: 1st order differentiation matrix, size: (N+1) x (N+1)
     :res:D2t: 2nd order differentiation matrix, size: (N+1) x (N+1)
     :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
     '''
     D0 = np.eye(N+1)
-    D1, D2, x = cheb_D2_mat(N) # Note: x is a column vector
+    D1, D2, x = cheb_D2_mat(N)  # Note: x is a column vector
     #D2 = np.dot(D1, D1)
 
-    J = np.arange(1,N)
-    K = np.arange(0,N+1)
+    J = np.arange(1, N)
+    K = np.arange(0, N+1)
     xjrow = 1 / (1 - x[J].T**2)
     xkcol0 = 1 - x[K]**2
     xkcol1 = -2 * x[K]
@@ -228,26 +231,27 @@ def cheb_D2_mat_robin_robin(N, ka, kb):
     fac2 = np.dot(xkcol2, xjrow)
 
     X, Y = np.meshgrid(K, J)
-    X = X.T; Y = Y.T
-    D1t = fac0 * D1[X,Y] + fac1 * D0[X,Y]
-    D2t = fac0 * D2[X,Y] + 2 * fac1 * D1[X,Y] + fac2 * D0[X,Y]
+    X = X.T
+    Y = Y.T
+    D1t = fac0 * D1[X, Y] + fac1 * D0[X, Y]
+    D2t = fac0 * D2[X, Y] + 2 * fac1 * D1[X, Y] + fac2 * D0[X, Y]
 
     omx = 0.5 * (1 - x[K])
     opx = 0.5 * (1 + x[K])
 
-    r0 = opx + (0.5 + D1[0,0] + kb) * xkcol0 / 2
-    r1 = 0.5 - (0.5 + D1[0,0] + kb) * x
-    r2 = -0.5 - D1[0,0] - kb
-    rcol1 = r0.T * D1[:,0] + r1.T * D0[:,0]
-    rcol2 = r0.T * D2[:,0] + 2 * r1.T * D1[:,0] + r2.T * D0[:,0]
+    r0 = opx + (0.5 + D1[0, 0] + kb) * xkcol0 / 2
+    r1 = 0.5 - (0.5 + D1[0, 0] + kb) * x
+    r2 = -0.5 - D1[0, 0] - kb
+    rcol1 = r0.T * D1[:, 0] + r1.T * D0[:, 0]
+    rcol2 = r0.T * D2[:, 0] + 2 * r1.T * D1[:, 0] + r2.T * D0[:, 0]
     rcol1.shape = (rcol1.size, 1)
     rcol2.shape = (rcol2.size, 1)
 
-    l0 = omx + (0.5 - D1[-1,-1] - ka) * xkcol0 / 2
-    l1 = -0.5 + (D1[-1,-1] + ka  -0.5) *x
-    l2 = D1[-1,-1] + ka - 0.5
-    lcol1 = l0.T * D1[:,-1] + l1.T * D0[:,-1]
-    lcol2 = l0.T * D2[:,-1] + 2 * l1.T * D1[:,-1] + l2.T * D0[:,-1]
+    l0 = omx + (0.5 - D1[-1, -1] - ka) * xkcol0 / 2
+    l1 = -0.5 + (D1[-1, -1] + ka - 0.5) * x
+    l2 = D1[-1, -1] + ka - 0.5
+    lcol1 = l0.T * D1[:, -1] + l1.T * D0[:, -1]
+    lcol2 = l0.T * D2[:, -1] + 2 * l1.T * D1[:, -1] + l2.T * D0[:, -1]
     lcol1.shape = (lcol1.size, 1)
     lcol2.shape = (lcol2.size, 1)
 
@@ -260,32 +264,25 @@ def cheb_D2_mat_robin_robin(N, ka, kb):
 def cheb_D2_mat_robin_robin_1(N, ka, kb):
     '''
     Chebyshev differentiation matrix subjecting to RBC-RBC.
-    RBC-RBC: Robin at x=-1 and x=+1
-    Note: 
-        NBC-RBC is a special case with ka = 0
-        RBC-NBC is a special case with kb = 0
-        NBC-NBC is a special case with ka = 0 and kb = 0
+    RBC-RBC:
+        du/dx + ka * u = 0 at x=-1
+        du/dx + kb * u = 0 at x=+1.
 
-    Ref:
-        Weideman, J. A.; Reddy, S. C. "A Matlab Differentiation Matrix Suite" ACM Trans. Math. Softw. 2000, 26, 465.
-
-    :res:D1t: 1st order differentiation matrix, size: (N+1) x (N+1)
-    :res:D2t: 2nd order differentiation matrix, size: (N+1) x (N+1)
-    :res:x: Chebyshev points = cos(i/N*pi), i = 0, 1, ..., N
+    Correctness in question.
     '''
     D, x = cheb_D1_mat(N)
     D1 = np.zeros_like(D)
-    D1[1:N,:] = D[1:N,:]
-    L = np.dot(D, D1) 
-    L[:,0] -= D[:,0] * kb
-    L[:,N] -= D[:,N] * ka
+    D1[1:N, :] = D[1:N, :]
+    L = np.dot(D, D1)
+    L[:, 0] = L[:, 0] - kb * D[:, 0]
+    L[:, N] = L[0, N] - ka * D[:, N]
 
     return L, x
 
 
 def cheb_D1_fft(v):
     '''
-    Evaluate 1st derivative with Chebyshev polynomials via fast Fourier 
+    Evaluate 1st derivative with Chebyshev polynomials via fast Fourier
     transform (FFT).
 
     Ref:
@@ -300,9 +297,9 @@ def cheb_D1_fft(v):
         return 0
     # Construct Chebyshev Gauss-Lobatto Grids
     ii = np.arange(N+1)
-    x = np.cos(ii * np.pi / N) 
+    x = np.cos(ii * np.pi / N)
 
-    # Projecting Gauss-Lobatto grids to equal-spaced grids 
+    # Projecting Gauss-Lobatto grids to equal-spaced grids
     # theta = ii * pi / N
     V = np.concatenate((v, np.flipud(v[1:N])))
     U = np.real(fft(V))
@@ -337,7 +334,7 @@ def cheb_D1_coefficients(fk):
 
 def cheb_D1_fchebt(v):
     '''
-    Evaluate 1st derivative with Chebyshev polynomials via fast Fourier 
+    Evaluate 1st derivative with Chebyshev polynomials via fast Fourier
     transform (FFT).
 
     Ref:
