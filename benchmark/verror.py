@@ -93,28 +93,41 @@ def plot_error_Ns():
     data_name = 'exact_OSCHEB_N8192_Ns200000/Ns_DBC_N256'
     data_oss = 'OSS/' + data_name
     data_oscheb = 'OSCHEB/' + data_name
-    data_cox = 'Cox_Matthews/' + data_name
+    #data_cox = 'Cox_Matthews/' + data_name
     data_krog = 'Krogstad/' + data_name
 
     mat_oss = loadmat(data_path + data_oss)
     mat_oscheb = loadmat(data_path + data_oscheb)
-    mat_cox = loadmat(data_path + data_cox)
+    #mat_cox = loadmat(data_path + data_cox)
     mat_krog = loadmat(data_path + data_krog)
 
     Ns1 = mat_oss['Ns1_1']
+    dNs1 = Ns1[1:]
+    Q1 = mat_oss['Q1']
+    dQ1 = Q1[1:] - Q1[:-1]
     Ns2 = mat_oscheb['Ns1_2']
-    Ns3 = mat_cox['Ns1_3']
+    dNs2 = Ns2[1:]
+    Q2 = mat_oscheb['Q2']
+    dQ2 = Q2[1:] - Q2[:-1]
+    #Ns3 = mat_cox['Ns1_3']
     Ns4 = mat_krog['Ns1_3']
+    dNs4 = Ns4[1:]
+    Q4 = mat_krog['Q3']
+    dQ4 = Q4[1:] - Q4[:-1]
     err1 = mat_oss['err1_1']
     err2 = mat_oscheb['err1_2']
-    err3 = mat_cox['err1_3']
+    #err3 = mat_cox['err1_3']
     err4 = mat_krog['err1_3']
 
     savemat('Ns_convergence_256',
         {'Ns_oss':Ns1,'err_oss':err1,
-        'Ns_oscheb':Ns2,'err_oscheb':err2,
-        'Ns_etdrk4':Ns4,'err_etdrk4':err4}
-        )
+         'dNs_oss':dNs1, 'dQ_oss':dQ1,
+         'Ns_oscheb':Ns2,'err_oscheb':err2,
+         'dNs_oscheb':dNs2, 'dQ_oscheb':dQ2,
+         'Ns_etdrk4':Ns4,'err_etdrk4':err4,
+         'dNs_etdrk4':dNs4, 'dQ_etdrk4':dQ4,
+        })
+    exit()
 
     fig = plt.figure()
     ax = plt.subplot(111)
@@ -211,8 +224,8 @@ def plot_q():
 
 
 if __name__ == '__main__':
-    plot_error_N()
-    #plot_error_Ns()
+    #plot_error_N()
+    plot_error_Ns()
     #plot_error_Ns_N()
     #plot_q()
     #plot_w()

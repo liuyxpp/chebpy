@@ -27,9 +27,9 @@ def barycentric_weights(x):
     '''
     Compute the Barycentric weights for Barycentric Lagrange interpolation.
 
-    See 
+    See
     * Berrut JP and Trefethn LN, SIAM Review, 2004, 45, 501-517.
-    * Kopriva DA, Implementing Spectral Methods for Partial Differential 
+    * Kopriva DA, Implementing Spectral Methods for Partial Differential
     Equations: Algorithms for Scientists and Engineers, 2009, Springer, Chapter
     3, section 4.
     '''
@@ -53,7 +53,7 @@ def barycentric_weights_cg(N):
     '''
     ii = np.arange(N+1)
     return np.power(-1,ii) * np.sin((2*ii+1)*np.pi/(2*N+2))
-    
+
 
 def barycentric_weights_cgl(N):
     '''
@@ -61,14 +61,15 @@ def barycentric_weights_cgl(N):
     The CG grids are
         x_j = cos(j*pi/N), j = 0, 1, 2, ..., N
     The weights are
-        w_j = (-1)^d_j, with
+        w_j = (-1)^j * d_j, with
         d_j = 1/2, j = 0 or j = N
         d_j = 1,   j = 1, 2, ..., N-1
 
     '''
     ii = np.arange(N+1)
-    w = np.ones(N+1) * np.power(-1,ii)
-    w[0] *= .5; w[N] *= .5
+    w = np.ones(N+1) * np.power(-1, ii)
+    w[0] *= .5
+    w[N] *= .5
     return w
 
 

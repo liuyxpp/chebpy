@@ -234,7 +234,7 @@ def test_exact_neumann(osc=0,oscheb=0,etdrk4=0):
         print 'OSC N = ', N, ' Ns = ', Ns-1
         q1, x1 = cheb_mde_osc(W, u0, L, Ns)
         Q1 = L * simps(q1, dx=1./N)
-        data_name = 'benchmark/NBC-NBC/exact/OSS_N' 
+        data_name = 'benchmark/NBC-NBC/exact/OSS_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
         savemat(data_name,{
                 'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
@@ -272,14 +272,14 @@ def test_exact_neumann(osc=0,oscheb=0,etdrk4=0):
         scheme = 1
         W, u0, x = init_chebyshev(N, L)
         print 'ETDRK4 N = ', N, ' Ns = ', Ns-1
-        q3, x3 = cheb_mde_neumann_etdrk4(W, u0, L, Ns, 
+        q3, x3 = cheb_mde_neumann_etdrk4(W, u0, L, Ns,
                                          None, algo, scheme)
         Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
         #if scheme == 0:
-        #    data_name = 'benchmark/NBC-NBC/exact/ETDRK4_Cox_N' 
+        #    data_name = 'benchmark/NBC-NBC/exact/ETDRK4_Cox_N'
         #    data_name = data_name + str(N) + '_Ns' + str(Ns-1)
         #else:
-        #    data_name = 'benchmark/NBC-NBC/exact/ETDRK4_Krogstad_N' 
+        #    data_name = 'benchmark/NBC-NBC/exact/ETDRK4_Krogstad_N'
         #    data_name = data_name + str(N) + '_Ns' + str(Ns-1)
         #savemat(data_name,{
         #        'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
@@ -307,10 +307,10 @@ def test_exact_neumann_dirichlet():
     q3, x3 = cheb_mde_neumann_dirichlet_etdrk4(W, u0, L, Ns, algo, scheme)
     Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
     if scheme == 0:
-        data_name = 'benchmark/NBC-DBC/exact/ETDRK4_Cox_N' 
+        data_name = 'benchmark/NBC-DBC/exact/ETDRK4_Cox_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     else:
-        data_name = 'benchmark/NBC-DBC/exact/ETDRK4_Krogstad_N' 
+        data_name = 'benchmark/NBC-DBC/exact/ETDRK4_Krogstad_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     savemat(data_name,{
             'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
@@ -336,14 +336,14 @@ def test_exact_robin_dirichlet():
     u0[0] = 0.
 
     print 'ETDRK4 N = ', N, ' Ns = ', Ns-1
-    q3, x3 = cheb_mde_robin_dirichlet_etdrk4(W, u0, L, Ns, ka, 
+    q3, x3 = cheb_mde_robin_dirichlet_etdrk4(W, u0, L, Ns, ka,
                                              algo, scheme)
     Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
     if scheme == 0:
-        data_name = 'benchmark/RBC-DBC/exact/ETDRK4_Cox_N' 
+        data_name = 'benchmark/RBC-DBC/exact/ETDRK4_Cox_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     else:
-        data_name = 'benchmark/RBC-DBC/exact/ETDRK4_Krogstad_N' 
+        data_name = 'benchmark/RBC-DBC/exact/ETDRK4_Krogstad_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     savemat(data_name,{
             'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
@@ -369,14 +369,14 @@ def test_exact_robin():
     W, u0, x = init_chebyshev(N, L)
 
     print 'ETDRK4 N = ', N, ' Ns = ', Ns-1
-    q3, x3 = cheb_mde_robin_etdrk4(W, u0, L, Ns, ka, kb, 
+    q3, x3 = cheb_mde_robin_etdrk4(W, u0, L, Ns, ka, kb,
                                              algo, scheme)
     Q3 = 0.5 * L * cheb_quadrature_clencurt(q3)
     if scheme == 0:
-        data_name = 'benchmark/RBC-RBC/exact/ETDRK4_Cox_N' 
+        data_name = 'benchmark/RBC-RBC/exact/ETDRK4_Cox_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     else:
-        data_name = 'benchmark/RBC-RBC/exact/ETDRK4_Krogstad_N' 
+        data_name = 'benchmark/RBC-RBC/exact/ETDRK4_Krogstad_N'
         data_name = data_name + str(N) + '_Ns' + str(Ns-1)
     savemat(data_name,{
             'N':N, 'Ns':Ns-1, 'W':W, 'u0':u0, 'Lz':L,
@@ -499,7 +499,7 @@ def test_Ns_dirichlet():
     Ns1 = 200000 + 1
     Ns2 = 200000 + 1
     Ns3 = 200000 + 1
-    method = 2 # 0: OSS, 1: OSCHEB, 2: ETDRK4 
+    method = 2 # 0: OSS, 1: OSCHEB, 2: ETDRK4
     algo3 = 1 # 0: circular, 1: hyperbolic, 2: scaling and squaring
     scheme = 1
     data_name = 'benchmark/Ns_convergence/'
@@ -617,7 +617,7 @@ def test_Ns_dirichlet():
     u0[0] = 0.; u0[-1] = 0.
     ns_max = int(np.log10((Ns3-1)/2)) # Ns_max = 10^{ns_max}
     for Ns in np.power(10, np.linspace(0,ns_max,iters)).astype(int) + 1:
-        #q3, x3 = cheb_mde_dirichlet_etdrk4(W3, u0, L, Ns, 
+        #q3, x3 = cheb_mde_dirichlet_etdrk4(W3, u0, L, Ns,
         #                                   None, None, algo3, scheme)
         solver = ETDRK4(L, N, Ns)
         q3, x3 = solver.solve(W3, u0)
@@ -946,7 +946,7 @@ def test_cheb_mde_brush():
         q(x) = N/L, x = x0
         q(x) = 0,   otherwise.
 
-    For ETDRK4 method, the space is discretized in a manner that grids 
+    For ETDRK4 method, the space is discretized in a manner that grids
     are clustered near the boundary (Chebyshev Gauss-Lobatto Grids). We
     can evaluate the integral by Clenshaw-Curtis quadrature, that is
         I = \Integrate d_x0 = (L/2) * q[x0] * w[x0] = 1
@@ -1017,7 +1017,7 @@ def test_cheb_mde_brush():
     D, xc = cheb_D1_mat(N)
     H = np.zeros(N+1)
     H[0:ix] = 1
-    H[ix] = 0.5 
+    H[ix] = 0.5
     plt.plot(x, H)
     plt.show()
     u0 = (2/L) * np.dot(D, H)
@@ -1026,7 +1026,7 @@ def test_cheb_mde_brush():
     print 'Step intetral =', (L/2) * cheb_quadrature_clencurt(u0)
     plt.plot(x, u0)
     plt.show()
-    
+
     q3, x3 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns)
     #q3, x3 = cheb_mde_neumann_etdrk4(W, u0, L, Ns)
     print np.linalg.norm(q3-q_exact_cheb)
@@ -1046,7 +1046,7 @@ def test_cheb_mde_brush():
     plt.plot(x, u0_dbc)
     plt.plot(x, u0_nbc)
     plt.show()
-    
+
     q4, x4 = cheb_mde_dirichlet_etdrk4(W, u0_dbc, L, Ns)
     #q4, x4 = cheb_mde_neumann_etdrk4(W, u0_nbc, L, Ns)
     print np.linalg.norm(q4-q_exact_cheb)
@@ -1058,7 +1058,7 @@ def test_cheb_mde_brush():
     q1_exact_cheb = u0
     plt.plot(x, u0)
     plt.show()
-    
+
     q5, x5 = cheb_mde_dirichlet_etdrk4(W, u0, L, Ns-1, ds)
     #q5, x5 = cheb_mde_neumann_etdrk4(W, u0, L, Ns-1, ds)
     print np.linalg.norm(q5-q_exact_cheb)
@@ -1083,7 +1083,7 @@ def test_cheb_mde_brush():
     #    #plt.show()
 
     savemat('IC',{
-        'N':N, 'Ns':Ns-1, 'Lz':L, 'x':x, 'q_exact':q_exact_cheb, 
+        'N':N, 'Ns':Ns-1, 'Lz':L, 'x':x, 'q_exact':q_exact_cheb,
         'q_kron':q2, 'q_heav':q3, 'q_gauss':q4, 'q_cke':q5})
 
     plt.figure()
@@ -1110,7 +1110,7 @@ def test_etdrk4_coefficients():
     N = 256
     Nsr = 600000 + 1
     hr = 1. / (Nsr - 1)
-    
+
     M = 32; R = 15.
     D1, D2, x = cheb_D2_mat_dirichlet_dirichlet(N)
     L = (4. / Lx**2) * D2
@@ -1187,7 +1187,7 @@ if __name__ == '__main__':
     #test_exact_robin_dirichlet()
     #test_exact_robin()
 
-    #test_cheb_mde_dirichlet()
+    test_cheb_mde_dirichlet()
     #test_cheb_mde_neumann()
     #test_cheb_mde_robin()
     #test_cheb_mde_mixed()
@@ -1201,4 +1201,4 @@ if __name__ == '__main__':
     #test_mde_eig()
     #test_etdrk4_coefficients()
 
-    test_cheb_mde_brush()
+    #test_cheb_mde_brush()

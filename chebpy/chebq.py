@@ -45,7 +45,7 @@ def cheb_quadrature_cgl(f):
 def clencurt_weights(N):
     '''
     The clenshaw-Curtis quadrature weights are:
-        w_n = (4/(r_n*N)) * \sum_{k=0,even}{N} (1/r_k * cos(pi*k*n/N) / 
+        w_n = (4/(r_n*N)) * \sum_{k=0,even}{N} (1/r_k * cos(pi*k*n/N) /
                 (1 - k^2), n = 0, 1, 2, ..., N
     Thus, w_0 = w_N, and w_0 = 1 / (N^2 - 1) for even N, w_0 = 1 / N^2
     for odd N.
@@ -82,11 +82,11 @@ def clencurt_weights_fft(N):
 
     c = np.zeros(N+1)
     if N % 2 == 0:
-        c[0:N+2:2] = 2. / (1. - np.arange(0,N+2,2)**2) 
+        c[0:N+2:2] = 2. / (1. - np.arange(0, N+2, 2)**2)
     else:
-        c[0:N:2] = 2. / (1. - np.arange(0,N,2)**2) 
+        c[0:N:2] = 2. / (1. - np.arange(0, N, 2)**2)
     c = np.concatenate((c, np.flipud(c[1:N])))
-    
+
     v = np.real(ifft(c))
 
     w = 2. * v[0:N+1]

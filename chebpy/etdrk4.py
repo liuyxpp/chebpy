@@ -20,7 +20,7 @@ __all__ = ['ETDRK4', # ETDRK4 class
            'ETDRK4FxCy', # ETDRK4 Fourier x and Chebyshev y
            'ETDRK4FxyCz', # ETDRK4 Fourier x, y, and Chebyshev z
            'ETDRK4Polar', # ETDRK4 in polar coordinates, Fourier theta and Chebyshev r
-           'ETDRK4Cylind', # ETDRK4 in cylindrical coordinates, Fourier theta and z and Chebyshev r 
+           'ETDRK4Cylind', # ETDRK4 in cylindrical coordinates, Fourier theta and z and Chebyshev r
            'etdrk4_coeff_nondiag', # complex contour integration
            'phi_contour_hyperbolic',
            'etdrk4_coeff_contour_hyperbolic',
@@ -33,7 +33,7 @@ __all__ = ['ETDRK4', # ETDRK4 class
           ]
 
 class ETDRK4(object):
-    def __init__(self, Lx, N, Ns, h=None, c=1.0,  
+    def __init__(self, Lx, N, Ns, h=None, c=1.0,
                  lbc=BC(), rbc=BC(), algo=1, scheme=1):
         '''
         The PDE is
@@ -67,7 +67,7 @@ class ETDRK4(object):
         self.c = c
         self.algo = algo
         self.scheme = scheme
-        
+
         self.update()
 
     def update(self):
@@ -79,14 +79,14 @@ class ETDRK4(object):
             if self.rbc.kind == DIRICHLET:
                 D1, L, x = cheb_D2_mat_dirichlet_dirichlet(self.N)
             else:
-                D1, L, x = cheb_D2_mat_dirichlet_robin(self.N, 
+                D1, L, x = cheb_D2_mat_dirichlet_robin(self.N,
                                                        self.rbc.beta)
         else:
             if self.rbc.kind == DIRICHLET:
-                D1, L, x = cheb_D2_mat_robin_dirichlet(self.N, 
+                D1, L, x = cheb_D2_mat_robin_dirichlet(self.N,
                                                        self.lbc.beta)
             else:
-                D1, L, x = cheb_D2_mat_robin_robin(self.N, 
+                D1, L, x = cheb_D2_mat_robin_robin(self.N,
                                                    self.lbc.beta,
                                                    self.rbc.beta)
 
@@ -97,7 +97,7 @@ class ETDRK4(object):
         L = self.c * self.L # the actual operator
         h = self.h
         c = 1.0
-        M = 32; R = 15.;
+        M = 16; R = 15.;
         if self.scheme == 0:
             if self.algo == 0:
                 E, E2, Q, f1, f2, f3 = \
@@ -151,19 +151,19 @@ class ETDRK4(object):
                 W = -w[1:-1]; W.shape = (W.size, 1)
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,1:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q[:,1:-1])
                     else:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[1:-1] = v
             else:
@@ -171,19 +171,19 @@ class ETDRK4(object):
                 W = -w[:-1]; W.shape = (W.size, 1)
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q[:,:-1])
                     else:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:-1] = v
         else:
@@ -192,19 +192,19 @@ class ETDRK4(object):
                 W = -w[1:]; W.shape = (W.size, 1)
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,1:])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q[:,1:])
                     else:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[1:] = v
             else:
@@ -212,19 +212,19 @@ class ETDRK4(object):
                 W = -w; W.shape = (W.size, 1)
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3, q)
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q)
                     else:
-                        v = etdrk4_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u = v
 
@@ -232,7 +232,7 @@ class ETDRK4(object):
 
 
 class ETDRK4FxCy(object):
-    def __init__(self, Lx, Ly, Nx, Ny, Ns, h=None, c=1.0,  
+    def __init__(self, Lx, Ly, Nx, Ny, Ns, h=None, c=1.0,
                  lbc=BC(), rbc=BC(), algo=1, scheme=1):
         '''
         The PDE is in 2D,
@@ -275,7 +275,7 @@ class ETDRK4FxCy(object):
         self.rbc = rbc
         self.algo = algo
         self.scheme = scheme
-        
+
         self.update()
 
     def update(self):
@@ -307,14 +307,14 @@ class ETDRK4FxCy(object):
             if self.rbc.kind == DIRICHLET:
                 D1, L, y = cheb_D2_mat_dirichlet_dirichlet(self.Ny)
             else:
-                D1, L, y = cheb_D2_mat_dirichlet_robin(self.Ny, 
+                D1, L, y = cheb_D2_mat_dirichlet_robin(self.Ny,
                                                        self.rbc.beta)
         else:
             if self.rbc.kind == DIRICHLET:
-                D1, L, y = cheb_D2_mat_robin_dirichlet(self.Ny, 
+                D1, L, y = cheb_D2_mat_robin_dirichlet(self.Ny,
                                                        self.lbc.beta)
             else:
-                D1, L, y = cheb_D2_mat_robin_robin(self.Ny, 
+                D1, L, y = cheb_D2_mat_robin_robin(self.Ny,
                                                    self.lbc.beta,
                                                    self.rbc.beta)
 
@@ -387,19 +387,19 @@ class ETDRK4FxCy(object):
                 W = -w[:,1:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,1:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:-1])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,1:-1] = v
             else:
@@ -407,19 +407,19 @@ class ETDRK4FxCy(object):
                 W = -w[:,:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,:-1])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:-1] = v
         else:
@@ -428,19 +428,19 @@ class ETDRK4FxCy(object):
                 W = -w[:,1:]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,1:])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,1:] = v
             else:
@@ -448,19 +448,19 @@ class ETDRK4FxCy(object):
                 W = -w
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3, q)
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q)
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u = v
 
@@ -468,7 +468,7 @@ class ETDRK4FxCy(object):
 
 
 class ETDRK4FxyCz(object):
-    def __init__(self, Lx, Ly, Lz, Nx, Ny, Nz, Ns, h=None, c=1.0,  
+    def __init__(self, Lx, Ly, Lz, Nx, Ny, Nz, Ns, h=None, c=1.0,
                  lbc=BC(), rbc=BC(), algo=1, scheme=1):
         '''
         The PDE is in 3D,
@@ -513,14 +513,14 @@ class ETDRK4FxyCz(object):
         self.rbc = rbc
         self.algo = algo
         self.scheme = scheme
-        
+
         self.update()
 
     def update(self):
         Nx = self.Nx
         Ny = self.Ny
         L = self._calc_operator() # the shape of coeff depends on BC
-        N, N = L.shape # N may be different than Nz+1 because of DBC 
+        N, N = L.shape # N may be different than Nz+1 because of DBC
         I = np.eye(N)
         dim = [Nx, Ny, N, N]
         self.E = np.zeros(dim)
@@ -551,14 +551,14 @@ class ETDRK4FxyCz(object):
             if self.rbc.kind == DIRICHLET:
                 D1, L, z = cheb_D2_mat_dirichlet_dirichlet(self.Nz)
             else:
-                D1, L, z = cheb_D2_mat_dirichlet_robin(self.Nz, 
+                D1, L, z = cheb_D2_mat_dirichlet_robin(self.Nz,
                                                        self.rbc.beta)
         else:
             if self.rbc.kind == DIRICHLET:
-                D1, L, z = cheb_D2_mat_robin_dirichlet(self.Nz, 
+                D1, L, z = cheb_D2_mat_robin_dirichlet(self.Nz,
                                                        self.lbc.beta)
             else:
-                D1, L, z = cheb_D2_mat_robin_robin(self.Nz, 
+                D1, L, z = cheb_D2_mat_robin_robin(self.Nz,
                                                    self.lbc.beta,
                                                    self.rbc.beta)
 
@@ -631,19 +631,19 @@ class ETDRK4FxyCz(object):
                 W = -w[:,:,1:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,:,1:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                        f4, f5, f6, q[:,:,:,1:-1])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,1:-1] = v
             else:
@@ -651,19 +651,19 @@ class ETDRK4FxyCz(object):
                 W = -w[:,:,:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,:,:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                        f4, f5, f6, q[:,:,:,:-1])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,:-1] = v
         else:
@@ -672,19 +672,19 @@ class ETDRK4FxyCz(object):
                 W = -w[:,:,1:]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,:,1:])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                                    E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                                    E, E2, f1, f2, f3,
                                                     f4, f5, f6, q[:,:,:,1:])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,1:] = v
             else:
@@ -692,19 +692,19 @@ class ETDRK4FxyCz(object):
                 W = -w
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3, q)
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q)
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u = v
 
@@ -712,7 +712,7 @@ class ETDRK4FxyCz(object):
 
 
 class ETDRK4Polar(object):
-    def __init__(self, R, Nr, Nt, Ns, h=None, c=1.0,  
+    def __init__(self, R, Nr, Nt, Ns, h=None, c=1.0,
                  lbc=BC(), rbc=BC(), algo=1, scheme=1):
         '''
         The PDE is in the polar coordinate,
@@ -742,7 +742,7 @@ class ETDRK4Polar(object):
         :param:algo: algorithm for calculation of RK4 coefficients.
         :param:scheme: RK4 scheme.
         '''
-        self.R = R 
+        self.R = R
         self.Nr = Nr
         self.Nt = Nt
         self.Ns = Ns
@@ -755,7 +755,7 @@ class ETDRK4Polar(object):
         self.rbc = rbc
         self.algo = algo
         self.scheme = scheme
-        
+
         self.update()
 
     def update(self):
@@ -774,7 +774,7 @@ class ETDRK4Polar(object):
         self.f6 = np.zeros(dim)
         for i in xrange(Nt):
             if i < Nt/2+1:
-                kt = i 
+                kt = i
             else:
                 kt = i - Nt
             # R**(-2) for maping from [0,R] to [0,1]
@@ -792,16 +792,16 @@ class ETDRK4Polar(object):
                 D1t, D2t, r = cheb_D2_mat_dirichlet_dirichlet(self.Nr)
                 r = r[1:-1]
             else:
-                D1t, D2t, r = cheb_D2_mat_dirichlet_robin(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_dirichlet_robin(self.Nr,
                                                        self.rbc.beta)
                 r = r[:-1]
         else:
             if self.rbc.kind == DIRICHLET:
-                D1t, D2t, r = cheb_D2_mat_robin_dirichlet(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_robin_dirichlet(self.Nr,
                                                        self.lbc.beta)
                 r = r[1:]
             else:
-                D1t, D2t, r = cheb_D2_mat_robin_robin(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_robin_robin(self.Nr,
                                                    self.lbc.beta,
                                                    self.rbc.beta)
 
@@ -890,19 +890,19 @@ class ETDRK4Polar(object):
                 W = -w[:,1:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,1:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:-1])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,1:-1] = v
             else: # not allowed in current implementation.
@@ -910,19 +910,19 @@ class ETDRK4Polar(object):
                 W = -w[:,:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,:-1])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:-1] = v
         else: # not allowed in current implementation.
@@ -931,19 +931,19 @@ class ETDRK4Polar(object):
                 W = -w[:,1:]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,1:])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:])
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,1:] = v
             else:
@@ -951,19 +951,19 @@ class ETDRK4Polar(object):
                 W = -w
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3, q)
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q)
                     else:
-                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxcy_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u = v
 
@@ -971,7 +971,7 @@ class ETDRK4Polar(object):
 
 
 class ETDRK4Cylind(object):
-    def __init__(self, R, Lz, Nr, Nt, Nz, Ns, h=None, c=1.0,  
+    def __init__(self, R, Lz, Nr, Nt, Nz, Ns, h=None, c=1.0,
                  lbc=BC(), rbc=BC(), algo=1, scheme=1):
         '''
         The PDE is in the cylindrical coordinate,
@@ -1005,7 +1005,7 @@ class ETDRK4Cylind(object):
         :param:algo: algorithm for calculation of RK4 coefficients.
         :param:scheme: RK4 scheme.
         '''
-        self.R = R 
+        self.R = R
         self.Lz = Lz
         self.Nr = Nr
         self.Nt = Nt
@@ -1020,7 +1020,7 @@ class ETDRK4Cylind(object):
         self.rbc = rbc
         self.algo = algo
         self.scheme = scheme
-        
+
         self.update()
 
     def update(self):
@@ -1042,15 +1042,15 @@ class ETDRK4Cylind(object):
         for i in xrange(Nt):
             for j in xrange(Nz):
                 if i < Nt/2+1:
-                    kt = i 
+                    kt = i
                 else:
                     kt = i - Nt
                 if j < Nz/2+1:
-                    kz = j 
+                    kz = j
                 else:
                     kz = j - Nz
                 # R**(-2) for maping from [0,R] to [0,1]
-                Lk = (L-np.diag((kt/self.r)**2))/self.R**2 
+                Lk = (L-np.diag((kt/self.r)**2))/self.R**2
                 Lk -= I*kz**2/self.Lz**2
                 self._calc_RK4_coeff(i, j, Lk)
 
@@ -1065,16 +1065,16 @@ class ETDRK4Cylind(object):
                 D1t, D2t, r = cheb_D2_mat_dirichlet_dirichlet(self.Nr)
                 r = r[1:-1]
             else:
-                D1t, D2t, r = cheb_D2_mat_dirichlet_robin(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_dirichlet_robin(self.Nr,
                                                        self.rbc.beta)
                 r = r[:-1]
         else:
             if self.rbc.kind == DIRICHLET:
-                D1t, D2t, r = cheb_D2_mat_robin_dirichlet(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_robin_dirichlet(self.Nr,
                                                        self.lbc.beta)
                 r = r[1:]
             else:
-                D1t, D2t, r = cheb_D2_mat_robin_robin(self.Nr, 
+                D1t, D2t, r = cheb_D2_mat_robin_robin(self.Nr,
                                                    self.lbc.beta,
                                                    self.rbc.beta)
 
@@ -1164,19 +1164,19 @@ class ETDRK4Cylind(object):
                 W = -w[:,:,1:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,1:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:-1])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,1:-1] = v
             else: # not allowed in current implementation.
@@ -1184,19 +1184,19 @@ class ETDRK4Cylind(object):
                 W = -w[:,:,:-1]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                 Q, f1, f2, f3, q[:,:,:-1])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,:-1])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,:-1] = v
         else: # not allowed in current implementation.
@@ -1205,19 +1205,19 @@ class ETDRK4Cylind(object):
                 W = -w[:,:,1:]
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, E, E2,
                                                       Q, f1, f2, f3, q[:,:,1:])
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                    f4, f5, f6, q[:,:,1:])
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u[:,:,1:] = v
             else:
@@ -1225,19 +1225,19 @@ class ETDRK4Cylind(object):
                 W = -w
                 if self.scheme == 0:
                     if q is not None:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3, q)
                     else:
-                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v, 
+                        v = etdrk4_scheme_coxmatthews(self.Ns, W, v,
                                                   E, E2, Q, f1, f2, f3)
                 else:
                     if q is not None:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6, q)
                     else:
-                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v, 
-                                               E, E2, f1, f2, f3, 
+                        v = etdrk4fxycz_scheme_krogstad(self.Ns, W, v,
+                                               E, E2, f1, f2, f3,
                                                f4, f5, f6)
                 u = v
 
@@ -1257,7 +1257,7 @@ def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
 
     E = expm(A)
     E2 = expm(A/2)
-    
+
     theta = np.linspace(.5/M, 1-.5/M, M) * np.pi
     r = R * np.exp(1j * theta)
 
@@ -1276,7 +1276,7 @@ def etdrk4_coeff_nondiag(L, h, M=32, R=1.0):
     f2 = 2 * (h/M) * np.real(f2)
     f3 = (h/M) * np.real(f3)
     Q = (h/M) * np.real(Q)
-    
+
     return (E, E2, Q, f1, f2, f3)
 
 
@@ -1312,7 +1312,7 @@ def phi_contour_hyperbolic_old(z, l=0, M=32):
     if l == 0:
         c = np.exp(s) * v
     else:
-        c = np.exp(s) * v / (s)**l 
+        c = np.exp(s) * v / (s)**l
 
     for k in np.arange(M):
         sIA = inv(s[k] * I - z)
@@ -1321,7 +1321,7 @@ def phi_contour_hyperbolic_old(z, l=0, M=32):
     return np.real((0.5 * 4.4921 * 1.0818 / np.pi) * phi)
 
 
-def phi_contour_hyperbolic(A, t=1, l=0, M=32):
+def phi_contour_hyperbolic(A, t=1, l=0, M=16):
     '''
     Evaluate \phi_l(tA) using complex contour integral methods with hyperbolic contour.
     See my Notebook page 2013.07.05.
@@ -1333,7 +1333,11 @@ def phi_contour_hyperbolic(A, t=1, l=0, M=32):
         phi_2(z) = [exp(z) - z - 1] / z^2
         phi_3(z) = [exp(z) - z^2/2 - z - 1] / z^3
 
-    REF: 
+    Note:
+        Here M=16 shall be optimal. Large M cause error saturates or increases.
+        2014.5.26, from experimental studies and REF 1&2.
+
+    REF:
         1. Schmelzer, T.; Trefethen, L. N. Electronic Transaction on Numerical
     Analysis, 2007, 29, 1-18.
         2. Weideman, J. A. C.; Trefethen, L. N. Mathematics of Computation,
@@ -1342,7 +1346,7 @@ def phi_contour_hyperbolic(A, t=1, l=0, M=32):
 
     N, N = A.shape
     I = np.eye(N)
-    phi = 1j * np.zeros((N,N))
+    phi = 1j * np.zeros((N, N))
 
     alpha = 1.1721
     h = 1.0818 / M
@@ -1351,12 +1355,12 @@ def phi_contour_hyperbolic(A, t=1, l=0, M=32):
     u = k * h
 
     z = mu * (1 + np.sin(u*1j - alpha))
-    v = np.cos(u*1j - alpha) # dz/du = i*mu*v
+    v = np.cos(u*1j - alpha)  # dz/du = i*mu*v
 
     if l == 0:
         c = np.exp(t*z) * v
     else:
-        c = np.exp(t*z) * v / (t*z)**l 
+        c = np.exp(t*z) * v / (t*z)**l
 
     for i in np.arange(np.size(k)):
         sIA = inv(z[i] * I - A)
@@ -1365,7 +1369,7 @@ def phi_contour_hyperbolic(A, t=1, l=0, M=32):
     return np.real(0.5 * h * mu / np.pi * phi)
 
 
-def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
+def etdrk4_coeff_contour_hyperbolic(L, h, M=16):
     '''
     Evaluate etdrk4 coefficients by complex contour integral using
     hyperbolic contour.
@@ -1381,7 +1385,7 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
         * Schmelzer, T.; Trefethen, L. N. **Evaluating Matrix Functions for
         Exponential Integrators Via Caratheodory-Fejer Approximation and Contour Integrals* 2007.
         * Weideman, J. A.; Trefethen, L. N. "Parabolic and Hyperbolic Contours for Computing the Bromwich Integral" Math. Comput. 2007, 76, 1341.
-        * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653. 
+        * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653.
     '''
 
     #E1 = phi_contour_hyperbolic(L*h, 0, M) # phi_0(h*L) = exp(h*L)
@@ -1395,11 +1399,11 @@ def etdrk4_coeff_contour_hyperbolic(L, h, M=32):
     f1 = h * (phi1 - 3 * phi2 + 4 * phi3)
     f2 = h * 2 * (phi2 - 2 * phi3)
     f3 = h * (4 * phi3 - phi2)
-    
+
     return E1, E2, Q, f1, f2, f3
 
 
-def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=32):
+def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=16):
     '''
     Evaluate etdrk4 coefficients by complex contour integral using
     hyperbolic contour for Krogstad scheme.
@@ -1408,13 +1412,13 @@ def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=32):
         * Schmelzer, T.; Trefethen, L. N. **Evaluating Matrix Functions for
         Exponential Integrators Via Caratheodory-Fejer Approximation and Contour Integrals* 2007.
         * Weideman, J. A.; Trefethen, L. N. "Parabolic and Hyperbolic Contours for Computing the Bromwich Integral" Math. Comput. 2007, 76, 1341.
-        * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653. 
+        * Trefethen, L. N.; Weideman, J. A. C.; Schmelzer, T.; "Talbot Quadratures and Rational Approximations" BIT Numer. Math. 2006, 46, 653.
     '''
 
-    #E1 = phi_contour_hyperbolic(L, h*c, 0, M) # phi_0(h*L) = exp(h*L)
-    E1 = expm(h*L)
-    #E2 = phi_contour_hyperbolic(L, 0.5*h*c, 0, M) # phi_0(h/2*L)
-    E2 = expm(0.5*h*L)
+    E1 = phi_contour_hyperbolic(L*h*c, 1.0, 0, M)  # phi_0(h*L) = exp(h*L)
+    #E1 = expm(h*L)
+    E2 = phi_contour_hyperbolic(L*0.5*h*c, 1.0, 0, M)  # phi_0(h/2*L)
+    #E2 = expm(0.5*h*L)
     f1 = h * 0.5 * phi_contour_hyperbolic(L, 0.5*h*c, 1, M)
     f2 = h * phi_contour_hyperbolic(L, 0.5*h*c, 2, M)
     phi1 = phi_contour_hyperbolic(L, h*c, 1, M)
@@ -1424,16 +1428,16 @@ def etdrk4_coeff_contour_hyperbolic_krogstad(L, h, c=1, M=32):
     f4 = h * 2 * phi2
     f5 = h * (4 * phi3 - phi2)
     f6 = -h * 4 * phi3
-    
+
     return E1, E2, f1, f2, f3, f4, f5, f6
 
 
 def etdrk4_coeff_scale_square(L, h, d=7):
     '''
-    Evaluate etdrk4 coefficients by scaling and squaring methods. 
+    Evaluate etdrk4 coefficients by scaling and squaring methods.
 
     Ref:
-        Berland, H.; Skaflestad, B.; Wright, W. M.; 
+        Berland, H.; Skaflestad, B.; Wright, W. M.;
         **EXPINT - A Matlab Package for Exponential Integrators**
         ACM Math. Soft. 2007, 33, Article 4.
     '''
@@ -1449,7 +1453,7 @@ def etdrk4_coeff_scale_square(L, h, d=7):
     f1 = h * (phi1 - 3 * phi2 + 4 * phi3)
     f2 = h * 2 * (phi2 - 2 * phi3)
     f3 = h * (4 * phi3 - phi2)
-    
+
     return E1, E2, Q, f1, f2, f3
 
 
@@ -1552,45 +1556,43 @@ def etdrk4fxycz_scheme_krogstad(Ns, w, v, E, E2, f1, f2, f3, f4, f5, f6, q=None)
     FFT in x and y, Chebyshev in z.
     Krogstad ETDRK4, whose stiff order is 3 better than Cox-Matthews ETDRK4.
     '''
-    vk = fft2(v, axes=(0,1))
+    vk = fft2(v, axes=(0, 1))
     ak = np.zeros_like(vk)
     bk = np.zeros_like(vk)
     ck = np.zeros_like(vk)
     Nx, Ny, Nz = v.shape
     for s in xrange(Ns-1):
-        vk = fft2(v, axes=(0,1))
+        vk = fft2(v, axes=(0, 1))
         Nu = w * v
-        Nuk = fft2(Nu, axes=(0,1))
+        Nuk = fft2(Nu, axes=(0, 1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                ak[i,j] = np.dot(E2[i,j], vk[i,j]) + np.dot(f1[i,j], Nuk[i,j])
-        a = ifft2(ak, axes=(0,1)).real
+                ak[i, j] = np.dot(E2[i, j], vk[i, j]) + \
+                    np.dot(f1[i, j], Nuk[i, j])
+        a = ifft2(ak, axes=(0, 1)).real
         Na = w * a
-        Nak = fft2(Na, axes=(0,1))
+        Nak = fft2(Na, axes=(0, 1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                bk[i,j] = ak[i,j] + np.dot(f2[i,j], Nak[i,j]-Nuk[i,j])
-        b = ifft2(bk, axes=(0,1)).real
+                bk[i, j] = ak[i, j] + np.dot(f2[i, j], Nak[i, j]-Nuk[i, j])
+        b = ifft2(bk, axes=(0, 1)).real
         Nb = w * b
-        Nbk = fft2(Nb, axes=(0,1))
+        Nbk = fft2(Nb, axes=(0, 1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                ck[i,j] = np.dot(E[i,j], vk[i,j]) + \
-                        np.dot(f3[i,j], Nuk[i,j]) + \
-                        np.dot(f4[i,j], Nbk[i,j]-Nuk[i,j])
-        c = ifft2(ck, axes=(0,1)).real
+                ck[i, j] = np.dot(E[i, j], vk[i, j]) + \
+                    np.dot(f3[i, j], Nuk[i, j]) + \
+                    np.dot(f4[i, j], Nbk[i, j]-Nuk[i, j])
+        c = ifft2(ck, axes=(0, 1)).real
         Nc = w * c
-        Nck = fft2(Nc, axes=(0,1))
+        Nck = fft2(Nc, axes=(0, 1))
         for i in xrange(Nx):
             for j in xrange(Ny):
-                vk[i,j] = ck[i,j] + np.dot(f4[i,j], Nak[i,j]) + \
-                        np.dot(f5[i,j], Nuk[i,j]+Nck[i,j]) + \
-                        np.dot(f6[i,j], Nak[i,j]+Nbk[i,j])
-        v = ifft2(vk, axes=(0,1)).real
+                vk[i, j] = ck[i, j] + np.dot(f4[i, j], Nak[i, j]) + \
+                    np.dot(f5[i, j], Nuk[i, j]+Nck[i, j]) + \
+                    np.dot(f6[i, j], Nak[i, j]+Nbk[i, j])
+        v = ifft2(vk, axes=(0, 1)).real
         if q is not None:
-            q[s+1] = v[:,:,:]
+            q[s+1] = v[:, :, :]
 
     return v
-
-
-

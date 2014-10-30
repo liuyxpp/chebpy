@@ -4,6 +4,8 @@
 import numpy as np
 import matplotlib.pylab as plt
 
+from timer import Timer
+
 from chebpy import ETDRK4FxCy, ETDRK4FxCy2, BC, ETDRK4
 from chebpy import ROBIN, DIRICHLET
 
@@ -38,7 +40,7 @@ def test_etdrk4fxcy():
     large.
     2. For homogeneous DBC, an approximate g(y) is
             g(y) = -A(y-1)^2
-            g_y = -2A(y-1)  
+            g_y = -2A(y-1)
             g_yy = -2A
     where A is a positive and large constant.
         Lx = 2*pi, Ly = 2.0, Nx = 64, Ny =32, Ns = 101
@@ -53,10 +55,10 @@ def test_etdrk4fxcy():
     Lx = 2*np.pi # x [0, Lx]
     Nx = 64
     Ly = 1.0 # y [0, Ly]
-    Ny = 32
-    Ns = 401 
+    Ny = 127
+    Ns = 101
     ds = 1. / (Ns - 1)
-    
+
     # Periodic in x direction, Fourier
     xx = np.arange(Nx) * Lx / Nx
     # Non-periodic in y direction, Chebyshev
@@ -101,17 +103,21 @@ def test_etdrk4fxcy():
     plt.show()
 
     # DBC
-    #lbc = BC(DIRICHLET, [0.0, 1.0, 0.0]) 
-    #rbc = BC(DIRICHLET, [0.0, 1.0, 0.0]) 
+    #lbc = BC(DIRICHLET, [0.0, 1.0, 0.0])
+    #rbc = BC(DIRICHLET, [0.0, 1.0, 0.0])
     # RBC
-    #lbc = BC(ROBIN, [1.0, A, 0.0]) 
-    #rbc = BC(ROBIN, [1.0, A, 0.0]) 
+    #lbc = BC(ROBIN, [1.0, A, 0.0])
+    #rbc = BC(ROBIN, [1.0, A, 0.0])
     # NBC
-    lbc = BC(ROBIN, [1.0, 0, 0.0]) 
-    rbc = BC(ROBIN, [1.0, 0, 0.0]) 
+    lbc = BC(ROBIN, [1.0, 0, 0.0])
+    rbc = BC(ROBIN, [1.0, 0, 0.0])
     #q_solver = ETDRK4FxCy(Lx, Ly, Nx, Ny, Ns, h=ds, lbc=lbc, rbc=rbc)
     q_solver = ETDRK4FxCy2(Lx, Ly, Nx, Ny, Ns, h=ds, lbc=lbc, rbc=rbc)
-    q1 = q_solver.solve(w, q[0], q)
+    M = 100   # Took 1117.6 x 4 seconds for cpu one core
+    with Timer() as t:
+        for m in xrange(M):
+            q1 = q_solver.solve(w, q[0], q)
+    print "100 runs took ", t.secs, " seconds."
 
     print 'Error =', np.max(np.abs(q1-q_exact))
 
@@ -143,7 +149,7 @@ def test_etdrk4fxcy():
     plt.xlabel('q[Nx*3/4,:]')
     plt.show()
     exit()
-    
+
     # Check with ETDRK4
     sech = 1. / np.cosh(0.25*(6*y-3*Ly))
     w1 = 1 - 2*sech**2
